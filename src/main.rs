@@ -22,7 +22,7 @@ struct ApiRequest {
 
 #[tokio::main]
 async fn main() {
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
 
     let make_svc = make_service_fn(|_conn| async {
         Ok::<_, Infallible>(service_fn(handle_request))
@@ -31,8 +31,8 @@ async fn main() {
     let server = Server::bind(&addr).serve(make_svc);
 
     println!("Rigil Proxy server running on http://{}", addr);
-    println!("Web UI: http://127.0.0.1:8080");
-    println!("API Documentation: http://127.0.0.1:8080/api/docs");
+    println!("Web UI: http://0.0.0.0:8080");
+    println!("API Documentation: http://0.0.0.0:8080/api/docs");
 
     if let Err(e) = server.await {
         eprintln!("Server error: {}", e);
