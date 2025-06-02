@@ -22,7 +22,7 @@ struct ApiRequest {
 
 #[tokio::main]
 async fn main() {
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 39651));
 
     let make_svc = make_service_fn(|_conn| async {
         Ok::<_, Infallible>(service_fn(handle_request))
@@ -49,81 +49,81 @@ async fn handle_request(req: Request<Body>) -> Result<Response<Body>, Infallible
     <title>Rigil Proxy</title>
     <meta charset="UTF-8">
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 40px; 
-            background-color: #fafafa; 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 40px;
+            background-color: #fafafa;
             color: #333;
         }
-        .container { 
-            max-width: 800px; 
-            margin: 0 auto; 
-            background: white; 
-            padding: 30px; 
-            border-radius: 4px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        input[type="text"] { 
-            width: 70%; 
-            padding: 8px 12px; 
-            font-size: 14px; 
-            border: 1px solid #ccc; 
-            border-radius: 2px; 
+        input[type="text"] {
+            width: 70%;
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 2px;
             font-family: inherit;
         }
-        button { 
-            padding: 8px 16px; 
-            font-size: 14px; 
-            margin-left: 10px; 
-            background-color: #f8f9fa; 
-            color: #333; 
-            border: 1px solid #ccc; 
-            border-radius: 2px; 
-            cursor: pointer; 
+        button {
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-left: 10px;
+            background-color: #f8f9fa;
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 2px;
+            cursor: pointer;
             font-family: inherit;
         }
-        button:hover { 
-            background-color: #e9ecef; 
+        button:hover {
+            background-color: #e9ecef;
             border-color: #adb5bd;
         }
-        .api-section { 
-            margin-top: 30px; 
-            padding: 20px; 
-            background-color: #f8f9fa; 
-            border-radius: 2px; 
+        .api-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 2px;
             border: 1px solid #e9ecef;
         }
-        .endpoint { 
-            margin: 10px 0; 
-            font-family: 'Courier New', monospace; 
-            background: #fff; 
-            padding: 8px; 
-            border-radius: 2px; 
+        .endpoint {
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            background: #fff;
+            padding: 8px;
+            border-radius: 2px;
             border: 1px solid #e9ecef;
             font-size: 13px;
         }
-        h1 { 
-            color: #333; 
-            border-bottom: 1px solid #e9ecef; 
-            padding-bottom: 10px; 
+        h1 {
+            color: #333;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 10px;
             font-weight: normal;
         }
-        h2 { 
-            color: #555; 
-            font-weight: normal; 
+        h2 {
+            color: #555;
+            font-weight: normal;
             font-size: 18px;
         }
-        h3 { 
-            color: #666; 
-            font-weight: normal; 
+        h3 {
+            color: #666;
+            font-weight: normal;
             font-size: 16px;
         }
-        a { 
-            color: #666; 
-            text-decoration: underline; 
+        a {
+            color: #666;
+            text-decoration: underline;
         }
-        a:hover { 
-            color: #333; 
+        a:hover {
+            color: #333;
         }
     </style>
 </head>
@@ -135,23 +135,23 @@ async fn handle_request(req: Request<Body>) -> Result<Response<Body>, Infallible
             <input type="text" name="url" placeholder="https://example.com" required>
             <button type="submit">軽量化</button>
         </form>
-        
+
         <div class="api-section">
             <h2>API エンドポイント</h2>
             <p>プログラムからアクセスする場合は以下のAPIを使用してください：</p>
-            
+
             <h3>HTML軽量化 (GET)</h3>
             <div class="endpoint">GET /proxy?url=https://example.com</div>
             <p>軽量化されたHTMLを直接返します。</p>
-            
+
             <h3>JSON API (GET)</h3>
             <div class="endpoint">GET /api/process?url=https://example.com</div>
             <p>JSON形式で結果を返します。</p>
-            
+
             <h3>JSON API (POST)</h3>
             <div class="endpoint">POST /api/process</div>
             <p>リクエストボディ: {"url": "https://example.com", "format": "json"}</p>
-            
+
             <p><a href="/api/docs">詳細なAPIドキュメント</a></p>
         </div>
     </div>
@@ -170,87 +170,87 @@ async fn handle_request(req: Request<Body>) -> Result<Response<Body>, Infallible
     <title>Rigil Proxy API Documentation</title>
     <meta charset="UTF-8">
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 40px; 
-            line-height: 1.6; 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
             color: #333;
             background-color: #fafafa;
         }
-        .container { 
-            max-width: 1000px; 
-            margin: 0 auto; 
-            background: white; 
-            padding: 30px; 
-            border-radius: 4px; 
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 4px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        .endpoint { 
-            background: #f8f9fa; 
-            padding: 15px; 
-            margin: 15px 0; 
-            border-left: 3px solid #ccc; 
+        .endpoint {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 3px solid #ccc;
             border-radius: 2px;
         }
-        .method { 
-            display: inline-block; 
-            padding: 4px 8px; 
-            border-radius: 2px; 
-            font-weight: bold; 
-            color: white; 
+        .method {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 2px;
+            font-weight: bold;
+            color: white;
             font-size: 12px;
         }
         .get { background-color: #6c757d; }
         .post { background-color: #495057; }
-        code { 
-            background: #f8f9fa; 
-            padding: 2px 4px; 
-            border-radius: 2px; 
+        code {
+            background: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 2px;
             font-family: 'Courier New', monospace;
             font-size: 13px;
         }
-        pre { 
-            background: #f8f9fa; 
-            padding: 15px; 
-            border-radius: 2px; 
-            overflow-x: auto; 
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 2px;
+            overflow-x: auto;
             border: 1px solid #e9ecef;
             font-family: 'Courier New', monospace;
             font-size: 13px;
         }
-        h1 { 
-            color: #333; 
-            border-bottom: 1px solid #e9ecef; 
-            padding-bottom: 10px; 
+        h1 {
+            color: #333;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 10px;
             font-weight: normal;
         }
-        h2 { 
-            color: #555; 
-            margin-top: 30px; 
+        h2 {
+            color: #555;
+            margin-top: 30px;
             font-weight: normal;
         }
-        h3 { 
-            color: #666; 
+        h3 {
+            color: #666;
             font-weight: normal;
         }
-        a { 
-            color: #666; 
-            text-decoration: underline; 
+        a {
+            color: #666;
+            text-decoration: underline;
         }
-        a:hover { 
-            color: #333; 
+        a:hover {
+            color: #333;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Rigil Proxy API Documentation</h1>
-        
+
         <h2>概要</h2>
         <p>Rigil ProxyはHTML軽量化機能を提供するRESTful APIです。Rigil-Browserと同じアルゴリズムを使用してHTMLを軽量化し、不要なJavaScript、CSS、タグを除去します。</p>
-        
+
         <h2>エンドポイント</h2>
-        
+
         <div class="endpoint">
             <h3><span class="method get">GET</span> /proxy</h3>
             <p><strong>説明:</strong> 指定されたURLのHTMLを軽量化して返します。</p>
@@ -262,7 +262,7 @@ async fn handle_request(req: Request<Body>) -> Result<Response<Body>, Infallible
             <p><strong>例:</strong></p>
             <pre>GET /proxy?url=https://example.com</pre>
         </div>
-        
+
         <div class="endpoint">
             <h3><span class="method get">GET</span> /api/process</h3>
             <p><strong>説明:</strong> 指定されたURLのHTMLを軽量化してJSON形式で返します。</p>
@@ -283,7 +283,7 @@ async fn handle_request(req: Request<Body>) -> Result<Response<Body>, Infallible
   "processed_at": "2024-01-01T12:00:00Z"
 }</pre>
         </div>
-        
+
         <div class="endpoint">
             <h3><span class="method post">POST</span> /api/process</h3>
             <p><strong>説明:</strong> JSON形式のリクエストでHTMLを軽量化します。</p>
@@ -311,7 +311,7 @@ Content-Type: application/json
   "processed_at": "2024-01-01T12:00:00Z"
 }</pre>
         </div>
-        
+
         <h2>エラーレスポンス</h2>
         <p>エラーが発生した場合、以下の形式でJSONが返されます：</p>
         <pre>{
@@ -321,7 +321,7 @@ Content-Type: application/json
   "original_url": "https://example.com",
   "processed_at": "2024-01-01T12:00:00Z"
 }</pre>
-        
+
         <h2>軽量化処理の詳細</h2>
         <ul>
             <li><strong>除去されるタグ:</strong> &lt;script&gt;、&lt;style&gt;、その他の不要なタグ</li>
@@ -329,7 +329,7 @@ Content-Type: application/json
             <li><strong>リンク変換:</strong> &lt;a&gt;タグはプロキシ経由のリンクに変換</li>
             <li><strong>URL正規化:</strong> 相対URLは絶対URLに変換</li>
         </ul>
-        
+
         <p><a href="/">← ホームに戻る</a></p>
     </div>
 </body>
@@ -341,7 +341,7 @@ Content-Type: application/json
         }
         (&Method::GET, "/proxy") => {
             let query = req.uri().query().unwrap_or("");
-            let params: std::collections::HashMap<String, String> = 
+            let params: std::collections::HashMap<String, String> =
                 url::form_urlencoded::parse(query.as_bytes())
                     .into_owned()
                     .collect();
@@ -349,7 +349,7 @@ Content-Type: application/json
             if let Some(target_url) = params.get("url") {
                 let normalized_url = normalize_url(target_url);
                 let base_url = get_base_url(&normalized_url);
-                
+
                 match get_html(&normalized_url).await {
                     Ok(html_body) => {
                         let processed_html = parse_html_to_text(&html_body, &base_url, &normalized_url);
@@ -376,7 +376,7 @@ Content-Type: application/json
         }
         (&Method::GET, "/api/process") => {
             let query = req.uri().query().unwrap_or("");
-            let params: std::collections::HashMap<String, String> = 
+            let params: std::collections::HashMap<String, String> =
                 url::form_urlencoded::parse(query.as_bytes())
                     .into_owned()
                     .collect();
@@ -386,7 +386,7 @@ Content-Type: application/json
                 let json_response = serde_json::to_string(&response).unwrap_or_else(|_| {
                     r#"{"success":false,"data":null,"error":"JSON serialization error","original_url":null,"processed_at":""}"#.to_string()
                 });
-                
+
                 let mut resp = Response::new(Body::from(json_response));
                 resp.headers_mut().insert("content-type", "application/json; charset=utf-8".parse().unwrap());
                 Ok(resp)
@@ -407,14 +407,14 @@ Content-Type: application/json
         (&Method::POST, "/api/process") => {
             let body_bytes = hyper::body::to_bytes(req.into_body()).await.unwrap_or_default();
             let body_str = String::from_utf8_lossy(&body_bytes);
-            
+
             match serde_json::from_str::<ApiRequest>(&body_str) {
                 Ok(api_req) => {
                     let response = process_url_api(&api_req.url).await;
                     let json_response = serde_json::to_string(&response).unwrap_or_else(|_| {
                         r#"{"success":false,"data":null,"error":"JSON serialization error","original_url":null,"processed_at":""}"#.to_string()
                     });
-                    
+
                     let mut resp = Response::new(Body::from(json_response));
                     resp.headers_mut().insert("content-type", "application/json; charset=utf-8".parse().unwrap());
                     Ok(resp)
@@ -445,7 +445,7 @@ Content-Type: application/json
 async fn process_url_api(target_url: &str) -> ApiResponse {
     let normalized_url = normalize_url(target_url);
     let base_url = get_base_url(&normalized_url);
-    
+
     match get_html(&normalized_url).await {
         Ok(html_body) => {
             let processed_html = parse_html_to_text(&html_body, &base_url, &normalized_url);
@@ -474,16 +474,16 @@ fn normalize_url(name: &str) -> String {
     if name.is_empty() {
         return String::new();
     }
-    
+
     let mut namestring = name.to_string();
     let name_length = namestring.len();
     let check_length = if name_length >= 8 { 8 } else { name_length };
     let first_part: String = namestring.chars().take(check_length).collect();
-    
+
     if !first_part.contains("http://") && !first_part.contains("https://") {
         namestring = format!("https://{}", namestring);
     }
-    
+
     namestring
 }
 
@@ -492,7 +492,7 @@ fn get_base_url(url: &str) -> String {
     let url_chars: Vec<char> = url.chars().collect();
     let mut base_url = String::new();
     let mut slash_count = 0;
-    
+
     for &ch in url_chars.iter() {
         base_url.push(ch);
         if ch == '/' {
@@ -502,7 +502,7 @@ fn get_base_url(url: &str) -> String {
             }
         }
     }
-    
+
     // パス部分の処理
     if slash_count == 3 && url.len() > base_url.len() {
         let remaining_path = &url[base_url.len()..];
@@ -510,7 +510,7 @@ fn get_base_url(url: &str) -> String {
             base_url.push_str(&remaining_path[..=last_slash_pos]);
         }
     }
-    
+
     base_url
 }
 
@@ -519,7 +519,7 @@ fn resolve_relative_url(href: &str, base_url: &str, current_url: &str) -> String
     if href.contains("http") {
         return href.to_string();
     }
-    
+
     if href.starts_with('/') {
         // 絶対パス（ルートからの相対パス）
         let mut domain_only = String::new();
@@ -550,7 +550,7 @@ fn extract_href(tag: &str) -> String {
     let tag_chars: Vec<char> = tag.chars().collect();
     let mut href = String::new();
     let mut i = 1;
-    
+
     while i < tag_chars.len() {
         if tag_chars[i] == '"' {
             i += 1;
@@ -562,7 +562,7 @@ fn extract_href(tag: &str) -> String {
         }
         i += 1;
     }
-    
+
     href
 }
 
@@ -572,18 +572,18 @@ fn process_link_tag(tag: &str, contents: &[char], i: &mut usize, base_url: &str,
     if href.is_empty() {
         return String::new();
     }
-    
+
     let resolved_href = resolve_relative_url(&href, base_url, current_url);
-    
+
     // リンクテキストを取得するため、</a>まで読み進める
     let mut link_content = String::new();
-    
+
     while *i < contents.len() {
         if contents[*i] == '<' {
             // 新しいタグの開始をチェック
             let mut peek_tag = String::new();
             let mut peek_i = *i;
-            
+
             while peek_i < contents.len() && contents[peek_i] != '>' {
                 peek_tag.push(contents[peek_i]);
                 peek_i += 1;
@@ -591,7 +591,7 @@ fn process_link_tag(tag: &str, contents: &[char], i: &mut usize, base_url: &str,
             if peek_i < contents.len() {
                 peek_tag.push(contents[peek_i]);
             }
-            
+
             if peek_tag.to_lowercase().contains("</a>") {
                 // 終了タグが見つかった
                 *i = peek_i + 1;
@@ -599,7 +599,7 @@ fn process_link_tag(tag: &str, contents: &[char], i: &mut usize, base_url: &str,
             } else if peek_tag.starts_with("<a ") || peek_tag == "<a>" {
                 // ネストしたaタグ（スキップ）
             }
-            
+
             // タグをスキップ
             *i = peek_i + 1;
         } else {
@@ -608,14 +608,14 @@ fn process_link_tag(tag: &str, contents: &[char], i: &mut usize, base_url: &str,
             *i += 1;
         }
     }
-    
+
     // リンクテキストが空の場合はURLを使用
     let display_text = if link_content.trim().is_empty() {
         resolved_href.clone()
     } else {
         link_content.trim().to_string()
     };
-    
+
     // プロキシ経由でリンクを処理するように修正
     format!(
         "<a href=\"/proxy?url={}\">{}</a>",
@@ -652,14 +652,14 @@ fn parse_html_to_text(html: &str, base_url: &str, current_url: &str) -> String {
     let contents: Vec<char> = html.chars().collect();
     let mut formatted_text = String::new();
     let mut i = 0;
-    
+
     // 基本的なHTMLヘッダーを追加
     formatted_text.push_str("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;line-height:1.6;margin:20px;color:#333;background-color:#fafafa;} a{color:#666;text-decoration:underline;margin-right:8px;} a:hover{color:#333;}</style></head><body>");
-    
+
     while i < contents.len() {
         if contents[i] == '<' {
             let mut tag = String::new();
-            
+
             // タグを読み取り
             while i < contents.len() {
                 tag.push(contents[i]);
@@ -668,7 +668,7 @@ fn parse_html_to_text(html: &str, base_url: &str, current_url: &str) -> String {
                     break;
                 }
             }
-            
+
             // タグの種類に応じて処理
             let tag_lower = tag.to_lowercase();
             if tag_lower.contains("<a ") || tag_lower == "<a>" {
@@ -689,7 +689,7 @@ fn parse_html_to_text(html: &str, base_url: &str, current_url: &str) -> String {
             i += 1;
         }
     }
-    
+
     formatted_text.push_str("</body></html>");
     formatted_text
 }
@@ -697,16 +697,16 @@ fn parse_html_to_text(html: &str, base_url: &str, current_url: &str) -> String {
 // HTMLを取得する関数（非同期版）
 async fn get_html(url: &str) -> Result<String, String> {
     let client = reqwest::Client::new();
-    
+
     // URLからクエリパラメータを分離
     let parsed_url = match Url::parse(url) {
         Ok(u) => u,
         Err(e) => return Err(format!("URL解析エラー: {}", e)),
     };
-    
+
     let base_url = format!("{}://{}{}", parsed_url.scheme(), parsed_url.host_str().unwrap_or(""), parsed_url.path());
     let query_pairs: Vec<(String, String)> = parsed_url.query_pairs().into_owned().collect();
-    
+
     match client.get(&base_url).query(&query_pairs).send().await {
         Ok(response) => {
             match response.text().await {
