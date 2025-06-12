@@ -4,6 +4,87 @@ use std::convert::Infallible;
 use std::net::SocketAddr;
 use url::Url;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+use std::fs;
+use std::path::Path;
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+struct ApiKeyData {
+    key: String,
+    total_bytes_processed: u64,
+    created_at: String,
+    last_used: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+struct ApiKeyStore {
+    keys: HashMap<String, ApiKeyData>,
+}
+
+impl ApiKeyStore {
+    fn new() -> Self {
+        Self {
+            keys: HashMap::new(),
+        }
+    }
+
+    fn load_from_file() -> Self {
+        if Path::new("api_keys.json").exists() {
+            match fs::read_to_string("api_keys.json") {
+                Ok(content) => {
+                    match serde_json::from_str(&content) {
+                        Ok(store) => store,
+                        Err(_) => Self::new(),
+                    }
+                }
+                Err(_) => Self::new(),
+            }
+        } else {
+            Self::new()
+        }
+    }
+
+    fn save_to_file(&self) {
+        if let Ok(content) = serde_json::to_string_pretty(self) {
+            let _ = fs::write("api_keys.json", content);
+        }
+    }
+
+    fn add_key(&mut self, key: String) {
+        let api_key_data = ApiKeyData {
+            key: key.clone(),
+            total_bytes_processed: 0,
+            created_at: chrono::Utc::now().to_rfc3339(),
+            last_used: None,
+        };
+        self.keys.insert(key, api_key_data);
+        self.save_to_file();
+    }
+
+    fn validate_key(&self, key: &str) -> bool {
+        self.keys.contains_key(key)
+    }
+
+    fn add_usage(&mut self, key: &str, bytes: u64) {
+        if let Some(api_key_data) = self.keys.get_mut(key) {
+            api_key_data.total_bytes_processed += bytes;
+            api_key_data.last_used = Some(chrono::Utc::now().to_rfc3339());
+            self.save_to_file();
+        }
+    }
+
+    fn get_usage(&self, key: &str) -> Option<u64> {
+        self.keys.get(key).map(|data| data.total_bytes_processed)
+    }
+
+    fn list_keys(&self) -> Vec<ApiKeyData> {
+        self.keys.values().cloned().collect()
+    }
+}
+
+type SharedApiKeyStore = Arc<RwLock<ApiKeyStore>>;
 
 #[derive(Serialize, Deserialize)]
 struct ApiResponse {
@@ -12,6 +93,8 @@ struct ApiResponse {
     error: Option<String>,
     original_url: Option<String>,
     processed_at: String,
+    original_size_bytes: Option<u64>,
+    processed_size_bytes: Option<u64>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -20,12 +103,33 @@ struct ApiRequest {
     format: Option<String>, // "html" or "json"
 }
 
+#[derive(Serialize, Deserialize)]
+struct CreateKeyRequest {
+    key: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct UsageResponse {
+    success: bool,
+    key: Option<String>,
+    total_bytes_processed: Option<u64>,
+    keys: Option<Vec<ApiKeyData>>,
+    error: Option<String>,
+}
+
 #[tokio::main]
 async fn main() {
-    let addr = SocketAddr::from(([0, 0, 0, 0], 39651));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 48588));
 
-    let make_svc = make_service_fn(|_conn| async {
-        Ok::<_, Infallible>(service_fn(handle_request))
+    // APIキーストアを初期化
+    let api_key_store = Arc::new(RwLock::new(ApiKeyStore::load_from_file()));
+
+    let api_key_store_clone = api_key_store.clone();
+    let make_svc = make_service_fn(move |_conn| {
+        let store = api_key_store_clone.clone();
+        async move {
+            Ok::<_, Infallible>(service_fn(move |req| handle_request(req, store.clone())))
+        }
     });
 
     let server = Server::bind(&addr).serve(make_svc);
@@ -39,7 +143,7 @@ async fn main() {
     }
 }
 
-async fn handle_request(req: Request<Body>) -> Result<Response<Body>, Infallible> {
+async fn handle_request(req: Request<Body>, api_key_store: SharedApiKeyStore) -> Result<Response<Body>, Infallible> {
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/") => {
             let html = r#"
@@ -125,6 +229,50 @@ async fn handle_request(req: Request<Body>) -> Result<Response<Body>, Infallible
         a:hover {
             color: #333;
         }
+        .api-key-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f0f8ff;
+            border-radius: 2px;
+            border: 1px solid #d1ecf1;
+        }
+        .api-key-form {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .api-key-form input {
+            width: 250px;
+            margin-right: 10px;
+        }
+        .generate-btn {
+            background-color: #007bff;
+            color: white;
+            border: 1px solid #007bff;
+            margin-left: 5px;
+        }
+        .generate-btn:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+        .result-box {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 2px;
+            min-height: 20px;
+        }
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
     </style>
 </head>
 <body>
@@ -136,21 +284,156 @@ async fn handle_request(req: Request<Body>) -> Result<Response<Body>, Infallible
             <button type="submit">軽量化</button>
         </form>
 
+        <div class="api-key-section">
+            <h2>APIキー管理</h2>
+            <p>テスト用のAPIキーを作成・管理できます：</p>
+            
+            <div class="api-key-form">
+                <input type="text" id="apiKeyInput" placeholder="APIキー名を入力（例：my-test-key）" value="">
+                <button type="button" onclick="createApiKey()">APIキー作成</button>
+                <button type="button" class="generate-btn" onclick="generateRandomKey()">ランダム生成</button>
+            </div>
+            
+            <div id="resultBox" class="result-box"></div>
+            
+            <div style="margin-top: 15px;">
+                <button type="button" onclick="listApiKeys()">全APIキー表示</button>
+                <button type="button" onclick="checkUsage()">使用量確認</button>
+            </div>
+            
+            <div id="apiKeysList" class="result-box" style="margin-top: 10px;"></div>
+        </div>
+
+        <script>
+            function generateRandomKey() {
+                const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+                let result = 'key-';
+                for (let i = 0; i < 12; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                document.getElementById('apiKeyInput').value = result;
+            }
+
+            async function createApiKey() {
+                const keyInput = document.getElementById('apiKeyInput');
+                const resultBox = document.getElementById('resultBox');
+                const apiKey = keyInput.value.trim();
+                
+                if (!apiKey) {
+                    resultBox.className = 'result-box error';
+                    resultBox.textContent = 'APIキー名を入力してください';
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/api/keys/create', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ key: apiKey })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        resultBox.className = 'result-box success';
+                        resultBox.textContent = `APIキー "${apiKey}" を作成しました！`;
+                        keyInput.value = '';
+                    } else {
+                        resultBox.className = 'result-box error';
+                        resultBox.textContent = `エラー: ${data.error || '不明なエラー'}`;
+                    }
+                } catch (error) {
+                    resultBox.className = 'result-box error';
+                    resultBox.textContent = `ネットワークエラー: ${error.message}`;
+                }
+            }
+
+            async function listApiKeys() {
+                const listBox = document.getElementById('apiKeysList');
+                
+                try {
+                    const response = await fetch('/api/keys/list');
+                    const data = await response.json();
+                    
+                    if (data.success && data.keys) {
+                        if (data.keys.length === 0) {
+                            listBox.textContent = 'APIキーが登録されていません';
+                        } else {
+                            listBox.innerHTML = '<h4>登録済みAPIキー:</h4>' + 
+                                data.keys.map(key => 
+                                    `<div style="margin: 5px 0; padding: 5px; border: 1px solid #ddd; border-radius: 2px;">
+                                        <strong>キー:</strong> ${key.key}<br>
+                                        <strong>使用量:</strong> ${key.total_bytes_processed.toLocaleString()} bytes<br>
+                                        <strong>作成日:</strong> ${new Date(key.created_at).toLocaleString()}<br>
+                                        <strong>最終使用:</strong> ${key.last_used ? new Date(key.last_used).toLocaleString() : '未使用'}
+                                    </div>`
+                                ).join('');
+                        }
+                    } else {
+                        listBox.textContent = `エラー: ${data.error || '不明なエラー'}`;
+                    }
+                } catch (error) {
+                    listBox.textContent = `ネットワークエラー: ${error.message}`;
+                }
+            }
+
+            async function checkUsage() {
+                const keyInput = document.getElementById('apiKeyInput');
+                const resultBox = document.getElementById('resultBox');
+                const apiKey = keyInput.value.trim();
+                
+                if (!apiKey) {
+                    resultBox.className = 'result-box error';
+                    resultBox.textContent = '使用量を確認したいAPIキー名を入力してください';
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/api/keys/usage?api_key=${encodeURIComponent(apiKey)}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        resultBox.className = 'result-box success';
+                        resultBox.textContent = `APIキー "${apiKey}" の使用量: ${data.total_bytes_processed.toLocaleString()} bytes`;
+                    } else {
+                        resultBox.className = 'result-box error';
+                        resultBox.textContent = `エラー: ${data.error || '不明なエラー'}`;
+                    }
+                } catch (error) {
+                    resultBox.className = 'result-box error';
+                    resultBox.textContent = `ネットワークエラー: ${error.message}`;
+                }
+            }
+        </script>
+
         <div class="api-section">
             <h2>API エンドポイント</h2>
             <p>プログラムからアクセスする場合は以下のAPIを使用してください：</p>
 
             <h3>HTML軽量化 (GET)</h3>
-            <div class="endpoint">GET /proxy?url=https://example.com</div>
-            <p>軽量化されたHTMLを直接返します。</p>
+            <div class="endpoint">GET /proxy?url=https://example.com&api_key=your_api_key</div>
+            <p>軽量化されたHTMLを直接返します。api_keyはオプションです。</p>
 
             <h3>JSON API (GET)</h3>
-            <div class="endpoint">GET /api/process?url=https://example.com</div>
-            <p>JSON形式で結果を返します。</p>
+            <div class="endpoint">GET /api/process?url=https://example.com&api_key=your_api_key</div>
+            <p>JSON形式で結果を返します。api_keyはオプションです。</p>
 
             <h3>JSON API (POST)</h3>
             <div class="endpoint">POST /api/process</div>
             <p>リクエストボディ: {"url": "https://example.com", "format": "json"}</p>
+            <p>APIキーはX-API-Keyヘッダーで指定可能です。</p>
+
+            <h3>APIキー管理</h3>
+            <div class="endpoint">POST /api/keys/create</div>
+            <p>新しいAPIキーを作成します。リクエストボディ: {"key": "your_api_key"}</p>
+            
+            <div class="endpoint">GET /api/keys/usage?api_key=your_api_key</div>
+            <p>指定したAPIキーの使用量を取得します。</p>
+            
+            <div class="endpoint">GET /api/keys/list</div>
+            <p>全てのAPIキーと使用量を一覧表示します。</p>
 
             <p><a href="/api/docs">詳細なAPIドキュメント</a></p>
         </div>
@@ -257,10 +540,11 @@ async fn handle_request(req: Request<Body>) -> Result<Response<Body>, Infallible
             <p><strong>パラメータ:</strong></p>
             <ul>
                 <li><code>url</code> (必須): 軽量化したいWebページのURL</li>
+                <li><code>api_key</code> (オプション): APIキー</li>
             </ul>
             <p><strong>レスポンス:</strong> 軽量化されたHTML (Content-Type: text/html)</p>
             <p><strong>例:</strong></p>
-            <pre>GET /proxy?url=https://example.com</pre>
+            <pre>GET /proxy?url=https://example.com&api_key=your_api_key</pre>
         </div>
 
         <div class="endpoint">
@@ -269,10 +553,11 @@ async fn handle_request(req: Request<Body>) -> Result<Response<Body>, Infallible
             <p><strong>パラメータ:</strong></p>
             <ul>
                 <li><code>url</code> (必須): 軽量化したいWebページのURL</li>
+                <li><code>api_key</code> (オプション): APIキー</li>
             </ul>
             <p><strong>レスポンス:</strong> JSON形式の結果</p>
             <p><strong>例:</strong></p>
-            <pre>GET /api/process?url=https://example.com
+            <pre>GET /api/process?url=https://example.com&api_key=your_api_key
 
 レスポンス:
 {
@@ -280,7 +565,9 @@ async fn handle_request(req: Request<Body>) -> Result<Response<Body>, Infallible
   "data": "&lt;html&gt;...&lt;/html&gt;",
   "error": null,
   "original_url": "https://example.com",
-  "processed_at": "2024-01-01T12:00:00Z"
+  "processed_at": "2024-01-01T12:00:00Z",
+  "original_size_bytes": 5120,
+  "processed_size_bytes": 1024
 }</pre>
         </div>
 
@@ -288,6 +575,10 @@ async fn handle_request(req: Request<Body>) -> Result<Response<Body>, Infallible
             <h3><span class="method post">POST</span> /api/process</h3>
             <p><strong>説明:</strong> JSON形式のリクエストでHTMLを軽量化します。</p>
             <p><strong>Content-Type:</strong> application/json</p>
+            <p><strong>ヘッダー:</strong></p>
+            <ul>
+                <li><code>X-API-Key</code> (オプション): APIキー</li>
+            </ul>
             <p><strong>リクエストボディ:</strong></p>
             <pre>{
   "url": "https://example.com",
@@ -297,6 +588,7 @@ async fn handle_request(req: Request<Body>) -> Result<Response<Body>, Infallible
             <p><strong>例:</strong></p>
             <pre>POST /api/process
 Content-Type: application/json
+X-API-Key: your_api_key
 
 {
   "url": "https://example.com"
@@ -308,7 +600,74 @@ Content-Type: application/json
   "data": "&lt;html&gt;...&lt;/html&gt;",
   "error": null,
   "original_url": "https://example.com",
-  "processed_at": "2024-01-01T12:00:00Z"
+  "processed_at": "2024-01-01T12:00:00Z",
+  "original_size_bytes": 5120,
+  "processed_size_bytes": 1024
+}</pre>
+        </div>
+
+        <div class="endpoint">
+            <h3><span class="method post">POST</span> /api/keys/create</h3>
+            <p><strong>説明:</strong> 新しいAPIキーを作成します。</p>
+            <p><strong>Content-Type:</strong> application/json</p>
+            <p><strong>リクエストボディ:</strong></p>
+            <pre>{"key": "your_api_key"}</pre>
+            <p><strong>例:</strong></p>
+            <pre>POST /api/keys/create
+Content-Type: application/json
+
+{"key": "my-unique-api-key"}
+
+レスポンス:
+{
+  "success": true,
+  "key": "my-unique-api-key",
+  "total_bytes_processed": 0,
+  "keys": null,
+  "error": null
+}</pre>
+        </div>
+
+        <div class="endpoint">
+            <h3><span class="method get">GET</span> /api/keys/usage</h3>
+            <p><strong>説明:</strong> 指定したAPIキーの使用量を取得します。</p>
+            <p><strong>パラメータ:</strong></p>
+            <ul>
+                <li><code>api_key</code> (必須): 使用量を確認したいAPIキー</li>
+            </ul>
+            <p><strong>例:</strong></p>
+            <pre>GET /api/keys/usage?api_key=my-unique-api-key
+
+レスポンス:
+{
+  "success": true,
+  "key": "my-unique-api-key",
+  "total_bytes_processed": 102400,
+  "keys": null,
+  "error": null
+}</pre>
+        </div>
+
+        <div class="endpoint">
+            <h3><span class="method get">GET</span> /api/keys/list</h3>
+            <p><strong>説明:</strong> 全てのAPIキーとその使用量を一覧表示します。</p>
+            <p><strong>例:</strong></p>
+            <pre>GET /api/keys/list
+
+レスポンス:
+{
+  "success": true,
+  "key": null,
+  "total_bytes_processed": null,
+  "keys": [
+    {
+      "key": "my-unique-api-key",
+      "total_bytes_processed": 102400,
+      "created_at": "2024-01-01T12:00:00Z",
+      "last_used": "2024-01-01T14:30:00Z"
+    }
+  ],
+  "error": null
 }</pre>
         </div>
 
@@ -347,12 +706,35 @@ Content-Type: application/json
                     .collect();
 
             if let Some(target_url) = params.get("url") {
+                // APIキーのチェック（オプション）
+                if let Some(api_key) = params.get("api_key") {
+                    let store = api_key_store.read().await;
+                    if !store.validate_key(api_key) {
+                        drop(store);
+                        let error_html = "<html><head><meta charset=\"UTF-8\"></head><body><h1>エラー</h1><p>無効なAPIキーです</p></body></html>";
+                        let mut response = Response::new(Body::from(error_html));
+                        *response.status_mut() = StatusCode::UNAUTHORIZED;
+                        response.headers_mut().insert("content-type", "text/html; charset=utf-8".parse().unwrap());
+                        return Ok(response);
+                    }
+                    drop(store);
+                }
+
                 let normalized_url = normalize_url(target_url);
                 let base_url = get_base_url(&normalized_url);
 
                 match get_html(&normalized_url).await {
                     Ok(html_body) => {
+                        let original_size = html_body.len() as u64;
                         let processed_html = parse_html_to_text(&html_body, &base_url, &normalized_url);
+
+                        // APIキーがある場合は使用量を記録
+                        if let Some(api_key) = params.get("api_key") {
+                            let mut store = api_key_store.write().await;
+                            store.add_usage(api_key, original_size);
+                            drop(store);
+                        }
+
                         let mut response = Response::new(Body::from(processed_html));
                         response.headers_mut().insert("content-type", "text/html; charset=utf-8".parse().unwrap());
                         Ok(response)
@@ -382,7 +764,8 @@ Content-Type: application/json
                     .collect();
 
             if let Some(target_url) = params.get("url") {
-                let response = process_url_api(target_url).await;
+                let api_key = params.get("api_key");
+                let response = process_url_api(target_url, api_key, api_key_store.clone()).await;
                 let json_response = serde_json::to_string(&response).unwrap_or_else(|_| {
                     r#"{"success":false,"data":null,"error":"JSON serialization error","original_url":null,"processed_at":""}"#.to_string()
                 });
@@ -397,6 +780,8 @@ Content-Type: application/json
                     error: Some("URLパラメータが必要です".to_string()),
                     original_url: None,
                     processed_at: chrono::Utc::now().to_rfc3339(),
+                    original_size_bytes: None,
+                    processed_size_bytes: None,
                 };
                 let json_response = serde_json::to_string(&error_response).unwrap();
                 let mut resp = Response::new(Body::from(json_response));
@@ -405,12 +790,17 @@ Content-Type: application/json
             }
         }
         (&Method::POST, "/api/process") => {
+            // ヘッダーからAPIキーを取得する場合も対応
+            let api_key_from_header = req.headers().get("x-api-key")
+                .and_then(|h| h.to_str().ok())
+                .map(|s| s.to_string());
+
             let body_bytes = hyper::body::to_bytes(req.into_body()).await.unwrap_or_default();
             let body_str = String::from_utf8_lossy(&body_bytes);
 
             match serde_json::from_str::<ApiRequest>(&body_str) {
                 Ok(api_req) => {
-                    let response = process_url_api(&api_req.url).await;
+                    let response = process_url_api(&api_req.url, api_key_from_header.as_ref(), api_key_store.clone()).await;
                     let json_response = serde_json::to_string(&response).unwrap_or_else(|_| {
                         r#"{"success":false,"data":null,"error":"JSON serialization error","original_url":null,"processed_at":""}"#.to_string()
                     });
@@ -426,6 +816,8 @@ Content-Type: application/json
                         error: Some("無効なJSONリクエスト".to_string()),
                         original_url: None,
                         processed_at: chrono::Utc::now().to_rfc3339(),
+                        original_size_bytes: None,
+                        processed_size_bytes: None,
                     };
                     let json_response = serde_json::to_string(&error_response).unwrap();
                     let mut resp = Response::new(Body::from(json_response));
@@ -433,6 +825,111 @@ Content-Type: application/json
                     Ok(resp)
                 }
             }
+        }
+        // APIキー管理エンドポイント
+        (&Method::POST, "/api/keys/create") => {
+            let body_bytes = hyper::body::to_bytes(req.into_body()).await.unwrap_or_default();
+            let body_str = String::from_utf8_lossy(&body_bytes);
+
+            match serde_json::from_str::<CreateKeyRequest>(&body_str) {
+                Ok(create_req) => {
+                    let mut store = api_key_store.write().await;
+                    store.add_key(create_req.key.clone());
+                    drop(store);
+
+                    let usage_response = UsageResponse {
+                        success: true,
+                        key: Some(create_req.key),
+                        total_bytes_processed: Some(0),
+                        keys: None,
+                        error: None,
+                    };
+
+                    let json_response = serde_json::to_string(&usage_response).unwrap();
+                    let mut resp = Response::new(Body::from(json_response));
+                    resp.headers_mut().insert("content-type", "application/json; charset=utf-8".parse().unwrap());
+                    Ok(resp)
+                }
+                Err(_) => {
+                    let error_response = UsageResponse {
+                        success: false,
+                        key: None,
+                        total_bytes_processed: None,
+                        keys: None,
+                        error: Some("無効なJSONリクエスト".to_string()),
+                    };
+                    let json_response = serde_json::to_string(&error_response).unwrap();
+                    let mut resp = Response::new(Body::from(json_response));
+                    *resp.status_mut() = StatusCode::BAD_REQUEST;
+                    resp.headers_mut().insert("content-type", "application/json; charset=utf-8".parse().unwrap());
+                    Ok(resp)
+                }
+            }
+        }
+        (&Method::GET, "/api/keys/usage") => {
+            let query = req.uri().query().unwrap_or("");
+            let params: std::collections::HashMap<String, String> =
+                url::form_urlencoded::parse(query.as_bytes())
+                    .into_owned()
+                    .collect();
+
+            if let Some(api_key) = params.get("api_key") {
+                let store = api_key_store.read().await;
+                if let Some(usage) = store.get_usage(api_key) {
+                    let usage_response = UsageResponse {
+                        success: true,
+                        key: Some(api_key.clone()),
+                        total_bytes_processed: Some(usage),
+                        keys: None,
+                        error: None,
+                    };
+                    let json_response = serde_json::to_string(&usage_response).unwrap();
+                    let mut resp = Response::new(Body::from(json_response));
+                    resp.headers_mut().insert("content-type", "application/json; charset=utf-8".parse().unwrap());
+                    Ok(resp)
+                } else {
+                    let error_response = UsageResponse {
+                        success: false,
+                        key: None,
+                        total_bytes_processed: None,
+                        keys: None,
+                        error: Some("無効なAPIキーです".to_string()),
+                    };
+                    let json_response = serde_json::to_string(&error_response).unwrap();
+                    let mut resp = Response::new(Body::from(json_response));
+                    *resp.status_mut() = StatusCode::UNAUTHORIZED;
+                    resp.headers_mut().insert("content-type", "application/json; charset=utf-8".parse().unwrap());
+                    Ok(resp)
+                }
+            } else {
+                let error_response = UsageResponse {
+                    success: false,
+                    key: None,
+                    total_bytes_processed: None,
+                    keys: None,
+                    error: Some("api_keyパラメータが必要です".to_string()),
+                };
+                let json_response = serde_json::to_string(&error_response).unwrap();
+                let mut resp = Response::new(Body::from(json_response));
+                *resp.status_mut() = StatusCode::BAD_REQUEST;
+                resp.headers_mut().insert("content-type", "application/json; charset=utf-8".parse().unwrap());
+                Ok(resp)
+            }
+        }
+        (&Method::GET, "/api/keys/list") => {
+            let store = api_key_store.read().await;
+            let keys = store.list_keys();
+            let usage_response = UsageResponse {
+                success: true,
+                key: None,
+                total_bytes_processed: None,
+                keys: Some(keys),
+                error: None,
+            };
+            let json_response = serde_json::to_string(&usage_response).unwrap();
+            let mut resp = Response::new(Body::from(json_response));
+            resp.headers_mut().insert("content-type", "application/json; charset=utf-8".parse().unwrap());
+            Ok(resp)
         }
         _ => {
             let mut not_found = Response::default();
@@ -442,19 +939,49 @@ Content-Type: application/json
     }
 }
 
-async fn process_url_api(target_url: &str) -> ApiResponse {
+async fn process_url_api(target_url: &str, api_key: Option<&String>, api_key_store: SharedApiKeyStore) -> ApiResponse {
     let normalized_url = normalize_url(target_url);
     let base_url = get_base_url(&normalized_url);
 
+    // APIキーの検証
+    if let Some(key) = api_key {
+        let store = api_key_store.read().await;
+        if !store.validate_key(key) {
+            drop(store);
+            return ApiResponse {
+                success: false,
+                data: None,
+                error: Some("無効なAPIキーです".to_string()),
+                original_url: Some(normalized_url),
+                processed_at: chrono::Utc::now().to_rfc3339(),
+                original_size_bytes: None,
+                processed_size_bytes: None,
+            };
+        }
+        drop(store);
+    }
+
     match get_html(&normalized_url).await {
         Ok(html_body) => {
+            let original_size = html_body.len() as u64;
             let processed_html = parse_html_to_text(&html_body, &base_url, &normalized_url);
+            let processed_size = processed_html.len() as u64;
+
+            // APIキーがある場合は使用量を記録
+            if let Some(key) = api_key {
+                let mut store = api_key_store.write().await;
+                store.add_usage(key, original_size);
+                drop(store);
+            }
+
             ApiResponse {
                 success: true,
                 data: Some(processed_html),
                 error: None,
                 original_url: Some(normalized_url),
                 processed_at: chrono::Utc::now().to_rfc3339(),
+                original_size_bytes: Some(original_size),
+                processed_size_bytes: Some(processed_size),
             }
         }
         Err(e) => {
@@ -464,6 +991,8 @@ async fn process_url_api(target_url: &str) -> ApiResponse {
                 error: Some(e),
                 original_url: Some(normalized_url),
                 processed_at: chrono::Utc::now().to_rfc3339(),
+                original_size_bytes: None,
+                processed_size_bytes: None,
             }
         }
     }
