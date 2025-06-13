@@ -131,11 +131,29 @@ pub fn get_home_page_html() -> &'static str {
 <body>
     <div class="container">
         <h1>Rigil Proxy - HTML軽量化プロキシ</h1>
-        <p>URLを入力してHTML軽量化を試してください：</p>
-        <form action="/proxy" method="get">
-            <input type="text" name="url" placeholder="https://example.com" required>
-            <button type="submit">軽量化</button>
-        </form>
+        
+        <!-- APIキー入力セクション -->
+        <div id="apiKeySection" class="api-key-section">
+            <h2>APIキー設定</h2>
+            <p>APIキーを入力してください（初回のみ）：</p>
+            <div class="api-key-form">
+                <input type="text" id="apiKeyInput" placeholder="あなたのAPIキーを入力">
+                <button onclick="saveApiKey()">保存</button>
+                <button onclick="clearApiKey()" class="secondary-btn">クリア</button>
+            </div>
+            <div id="apiKeyStatus" class="result-box" style="display: none;"></div>
+        </div>
+
+        <!-- メイン機能セクション -->
+        <div id="mainSection" style="display: none;">
+            <p>URLを入力してHTML軽量化を試してください：</p>
+            <div style="display: flex; align-items: center;">
+                <input type="text" id="urlInput" placeholder="https://example.com" style="flex: 1;">
+                <button onclick="processUrl()">軽量化</button>
+            </div>
+            <div id="processResult" class="result-box" style="display: none;"></div>
+            <div id="currentApiKey" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
+        </div>
 
         <div class="api-key-section">
             <h2>管理機能</h2>
@@ -178,6 +196,114 @@ pub fn get_home_page_html() -> &'static str {
             <p><a href="/api/docs">詳細なAPIドキュメント</a></p>
         </div>
     </div>
+
+    <script>
+        // … なんとなく、LocalStorageって不思議だよね
+        const API_KEY_STORAGE_KEY = 'rigil_proxy_api_key';
+
+        // ページ読み込み時の初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedApiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+            if (savedApiKey) {
+                showMainSection(savedApiKey);
+            } else {
+                showApiKeySection();
+            }
+        });
+
+        function showApiKeySection() {
+            document.getElementById('apiKeySection').style.display = 'block';
+            document.getElementById('mainSection').style.display = 'none';
+        }
+
+        function showMainSection(apiKey) {
+            document.getElementById('apiKeySection').style.display = 'none';
+            document.getElementById('mainSection').style.display = 'block';
+            document.getElementById('currentApiKey').textContent = `現在のAPIキー: ${apiKey.substring(0, 8)}...`;
+        }
+
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            const statusBox = document.getElementById('apiKeyStatus');
+            
+            if (!apiKey) {
+                showResult(statusBox, 'APIキーを入力してください', 'error');
+                return;
+            }
+
+            localStorage.setItem(API_KEY_STORAGE_KEY, apiKey);
+            showResult(statusBox, 'APIキーを保存しました', 'success');
+            
+            setTimeout(() => {
+                showMainSection(apiKey);
+            }, 1000);
+        }
+
+        function clearApiKey() {
+            localStorage.removeItem(API_KEY_STORAGE_KEY);
+            const statusBox = document.getElementById('apiKeyStatus');
+            showResult(statusBox, 'APIキーをクリアしました', 'info');
+            
+            setTimeout(() => {
+                showApiKeySection();
+                document.getElementById('apiKeyInput').value = '';
+            }, 1000);
+        }
+
+        async function processUrl() {
+            const url = document.getElementById('urlInput').value.trim();
+            const resultBox = document.getElementById('processResult');
+            const apiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+            
+            if (!url) {
+                showResult(resultBox, 'URLを入力してください', 'error');
+                return;
+            }
+
+            if (!apiKey) {
+                showResult(resultBox, 'APIキーが設定されていません', 'error');
+                return;
+            }
+
+            showResult(resultBox, '処理中...', 'info');
+
+            try {
+                const response = await fetch(`/proxy?url=${encodeURIComponent(url)}&api_key=${encodeURIComponent(apiKey)}`);
+                
+                if (response.ok) {
+                    const html = await response.text();
+                    // 結果を新しいウィンドウで表示
+                    const newWindow = window.open();
+                    newWindow.document.write(html);
+                    newWindow.document.close();
+                    
+                    showResult(resultBox, '軽量化完了！新しいウィンドウで結果を表示しました', 'success');
+                } else {
+                    const errorText = await response.text();
+                    showResult(resultBox, `エラー: ${response.status} - ${errorText}`, 'error');
+                }
+            } catch (error) {
+                showResult(resultBox, `処理中にエラーが発生しました: ${error.message}`, 'error');
+            }
+        }
+
+        function showResult(element, message, type) {
+            element.style.display = 'block';
+            element.textContent = message;
+            element.className = `result-box ${type}`;
+        }
+
+        // Enterキーでの操作をサポート
+        document.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                if (document.getElementById('apiKeySection').style.display !== 'none') {
+                    saveApiKey();
+                } else if (document.getElementById('mainSection').style.display !== 'none') {
+                    processUrl();
+                }
+            }
+        });
+    </script>
 </body>
 </html>
             "#
@@ -505,6 +631,14 @@ pub fn get_admin_page_html() -> &'static str {
         .secondary-btn:hover {
             background-color: #545b62;
             border-color: #4e555b;
+        }
+        #urlInput {
+            margin-right: 10px;
+        }
+        #processResult {
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
         }
         .api-key-table {
             width: 100%;
