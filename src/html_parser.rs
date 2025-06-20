@@ -254,7 +254,7 @@ fn is_formatted(tag: String) -> String {
     let tags: Vec<&str> = vec![
         "<title", "</title", "<br", "<br /", "<h1", "</h1", "<h2", "</h2", "<h3", "</h3", "<h4",
         "</h4", "<h5", "</h5", "<h6", "</h6", "<b>", "</b>", "<i>", "</i>", "<li>", "<li ",
-        "</li>", "<ul", "</ul", "<ol", "<ol ", "</ol",
+        "</li>", "<ul", "</ul", "<ol", "<ol ", "</ol", "<code", "</code", "<pre", "</pre",
     ];
     let length_tags: usize = tags.len();
     for i in 0..length_tags - 1 {
@@ -270,4 +270,4 @@ fn is_formatted(tag: String) -> String {
         }
     }
     String::from("")
-} 
+}
