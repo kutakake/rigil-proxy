@@ -1,0 +1,3 @@
+[submodule "reader_mode_maker"]
+	path = reader_mode_maker
+	url = https://github.com/kutakake/reader_mode_maker.git

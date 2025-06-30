@@ -648,6 +648,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "reader_mode_maker"
+version = "0.1.0"
+
+[[package]]
 name = "redox_syscall"
 version = "0.5.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -703,6 +707,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "hyper",
+ "reader_mode_maker",
  "reqwest",
  "serde",
  "serde_json",

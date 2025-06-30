@@ -17,7 +17,7 @@ use tokio::sync::RwLock;
 
 #[tokio::main]
 async fn main() {
-    let addr = SocketAddr::from(([0, 0, 0, 0], 48588));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 62223));
 
     // APIキーストアを初期化
     let api_key_store = Arc::new(RwLock::new(ApiKeyStore::load_from_file()));

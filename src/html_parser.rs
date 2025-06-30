@@ -1,4 +1,5 @@
 use url::Url;
+use reader_mode_maker;
 
 // URLを正規化する関数（Rigil-Browserと同じ）
 pub fn normalize_url(name: &str) -> String {
@@ -154,38 +155,16 @@ fn process_link_tag(tag: &str, contents: &[char], i: &mut usize, base_url: &str,
     )
 }
 
-// スクリプトタグをスキップする関数（Rigil-Browserと同じ）
-fn skip_script_tag(contents: &[char], i: &mut usize) {
-    let mut tag = String::new();
-    while *i < contents.len() {
-        tag.push(contents[*i]);
-        if contents[*i] == '>' && tag.contains("</script>") {
-            break;
-        }
-        *i += 1;
-    }
-}
-
-// スタイルタグをスキップする関数（Rigil-Browserと同じ）
-fn skip_style_tag(contents: &[char], i: &mut usize) {
-    let mut tag = String::new();
-    while *i < contents.len() {
-        tag.push(contents[*i]);
-        if contents[*i] == '>' && tag.contains("</style>") {
-            break;
-        }
-        *i += 1;
-    }
-}
-
 // HTMLを解析してテキストに変換する関数（Rigil-Browserと同じ）
 pub fn parse_html_to_text(html: &str, base_url: &str, current_url: &str) -> String {
-    let contents: Vec<char> = html.chars().collect();
     let mut formatted_text = String::new();
-    let mut i = 0;
 
     // 基本的なHTMLヘッダーを追加
     formatted_text.push_str("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;line-height:1.6;margin:20px;color:#333;background-color:#fafafa;} a{color:#666;text-decoration:underline;margin-right:8px;} a:hover{color:#333;}</style></head><body>");
+
+    let culled_html = reader_mode_maker::culling(html);
+    let contents: Vec<char> = culled_html.chars().collect();
+    let mut i = 0;
 
     while i < contents.len() {
         if contents[i] == '<' {
@@ -207,12 +186,8 @@ pub fn parse_html_to_text(html: &str, base_url: &str, current_url: &str) -> Stri
                 if !link_html.is_empty() {
                     formatted_text.push_str(&link_html);
                 }
-            } else if tag_lower.contains("<script") {
-                skip_script_tag(&contents, &mut i);
-            } else if tag_lower.contains("<style") {
-                skip_style_tag(&contents, &mut i);
             } else {
-                formatted_text.push_str(&is_formatted(tag));
+                formatted_text.push_str(&tag);
             }
         } else {
             // 通常のテキスト
@@ -247,27 +222,4 @@ pub async fn get_html(url: &str) -> Result<String, String> {
         }
         Err(e) => Err(format!("リクエストエラー: {}", e)),
     }
-}
-
-// フォーマットされたタグかどうかを判定する関数（Rigil-Browserと同じ）
-fn is_formatted(tag: String) -> String {
-    let tags: Vec<&str> = vec![
-        "<title", "</title", "<br", "<br /", "<h1", "</h1", "<h2", "</h2", "<h3", "</h3", "<h4",
-        "</h4", "<h5", "</h5", "<h6", "</h6", "<b>", "</b>", "<i>", "</i>", "<li>", "<li ",
-        "</li>", "<ul", "</ul", "<ol", "<ol ", "</ol", "<code", "</code", "<pre", "</pre",
-    ];
-    let length_tags: usize = tags.len();
-    for i in 0..length_tags - 1 {
-        if tag.contains(tags[i]) {
-            let output: String = tags[i].to_string();
-            let vec_output: Vec<char> = output.chars().collect();
-            let length_output: usize = output.len();
-            if vec_output[length_output - 1] == '>' {
-                return output;
-            } else {
-                return format!("{}{}", output, ">");
-            }
-        }
-    }
-    String::from("")
 }

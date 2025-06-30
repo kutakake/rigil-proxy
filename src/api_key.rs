@@ -47,7 +47,7 @@ impl ApiKeyStore {
         if admin_key != ADMIN_API_KEY {
             return Err("管理者キーが必要だよ".to_string());
         }
-        
+
         let api_key_data = ApiKeyData {
             key: key.clone(),
             total_bytes_processed: 0,
@@ -65,6 +65,7 @@ impl ApiKeyStore {
 
     pub fn add_usage(&mut self, key: &str, bytes: u64) {
         if let Some(api_key_data) = self.keys.get_mut(key) {
+            println!("{}bytes", bytes);
             api_key_data.total_bytes_processed += bytes;
             api_key_data.last_used = Some(chrono::Utc::now().to_rfc3339());
             self.save_to_file();
@@ -79,7 +80,7 @@ impl ApiKeyStore {
         if admin_key != ADMIN_API_KEY {
             return Err("管理者キーが必要だよ".to_string());
         }
-        
+
         if self.keys.remove(key).is_some() {
             self.save_to_file();
             Ok(())
@@ -96,4 +97,4 @@ impl ApiKeyStore {
     }
 }
 
-pub type SharedApiKeyStore = Arc<RwLock<ApiKeyStore>>; 
+pub type SharedApiKeyStore = Arc<RwLock<ApiKeyStore>>;
