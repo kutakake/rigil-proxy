@@ -1,6 +1,7 @@
 use url::Url;
 use reader_mode_maker;
 use std::time::Duration;
+use htmlescape;
 
 // URLを正規化する関数（Rigil-Browserと同じ）
 pub fn normalize_url(name: &str) -> String {
@@ -143,16 +144,23 @@ fn process_link_tag(tag: &str, contents: &[char], i: &mut usize, base_url: &str,
     }
 
     // リンクテキストが空の場合はURLを使用
-    let display_text = if link_content.trim().is_empty() {
+    let mut display_text = if link_content.trim().is_empty() {
         resolved_href.clone()
     } else {
         link_content.trim().to_string()
     };
 
+    // 長いリンクテキストを短縮する（50文字以上の場合）
+    if display_text.chars().count() > 50 {
+        display_text = format!("{}...", display_text.chars().take(47).collect::<String>());
+    }
+
     // プロキシ経由でリンクを処理するように修正
     format!(
-        "<a href=\"/proxy?url={}\">{}</a>",
-        urlencoding::encode(&resolved_href), display_text
+        "<a href=\"/proxy?url={}\" title=\"{}\">{}</a>",
+        urlencoding::encode(&resolved_href), 
+        htmlescape::encode_minimal(&resolved_href),
+        htmlescape::encode_minimal(&display_text)
     )
 }
 
@@ -161,7 +169,7 @@ pub fn parse_html_to_text(html: &str, base_url: &str, current_url: &str) -> Stri
     let mut formatted_text = String::new();
 
     // 基本的なHTMLヘッダーを追加
-    formatted_text.push_str("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;line-height:1.6;margin:20px;color:#333;background-color:#fafafa;} a{color:#666;text-decoration:underline;margin-right:8px;} a:hover{color:#333;}</style></head><body>");
+    formatted_text.push_str("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;line-height:1.6;margin:20px;color:#333;background-color:#fafafa;max-width:100%;overflow-x:auto;} a{color:#666;text-decoration:underline;margin-right:8px;word-break:break-word;max-width:100%;display:inline-block;} a:hover{color:#333;}</style></head><body>");
 
     let culled_html = reader_mode_maker::culling(html);
     let contents: Vec<char> = culled_html.chars().collect();
