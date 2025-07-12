@@ -126,6 +126,40 @@ pub fn get_home_page_html() -> &'static str {
             background-color: #f8d7da;
             border-color: #f5c6cb;
         }
+        .loading {
+            color: #004085;
+            background-color: #cce5ff;
+            border-color: #b8daff;
+        }
+        .progress-container {
+            margin-top: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            height: 20px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #007bff;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        .progress-text {
+            text-align: center;
+            line-height: 20px;
+            color: #495057;
+            font-size: 12px;
+        }
+        .cancel-btn {
+            background-color: #dc3545;
+            color: white;
+            border: 1px solid #dc3545;
+            margin-left: 10px;
+        }
+        .cancel-btn:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
     </style>
 </head>
 <body>
@@ -149,7 +183,7 @@ pub fn get_home_page_html() -> &'static str {
             <p>URLを入力してHTML軽量化を試してください：</p>
             <div style="display: flex; align-items: center;">
                 <input type="text" id="urlInput" placeholder="https://example.com" style="flex: 1;">
-                <button onclick="processUrl()">軽量化</button>
+                <button id="processBtn" onclick="processUrl()">軽量化</button>
             </div>
             <div id="processResult" class="result-box" style="display: none;"></div>
             <div id="currentApiKey" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
@@ -250,9 +284,14 @@ pub fn get_home_page_html() -> &'static str {
             }, 1000);
         }
 
+        let currentController = null;
+        let progressInterval = null;
+        let isProcessing = false;
+
         async function processUrl() {
             const url = document.getElementById('urlInput').value.trim();
             const resultBox = document.getElementById('processResult');
+            const processBtn = document.getElementById('processBtn');
             const apiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
             
             if (!url) {
@@ -265,25 +304,153 @@ pub fn get_home_page_html() -> &'static str {
                 return;
             }
 
-            showResult(resultBox, '処理中...', 'info');
+            if (isProcessing) {
+                showResult(resultBox, '既に処理中です。完了までお待ちください', 'info');
+                return;
+            }
+
+            // 既存のリクエストをキャンセル
+            if (currentController) {
+                currentController.abort();
+            }
+
+            isProcessing = true;
+            currentController = new AbortController();
+            
+            // UIの状態を変更
+            processBtn.disabled = true;
+            processBtn.textContent = '処理中...';
+            
+            showLoadingProgress(resultBox, url);
 
             try {
-                const response = await fetch(`/proxy?url=${encodeURIComponent(url)}&api_key=${encodeURIComponent(apiKey)}`);
+                const response = await fetch(`/proxy?url=${encodeURIComponent(url)}&api_key=${encodeURIComponent(apiKey)}`, {
+                    signal: currentController.signal
+                });
                 
                 if (response.ok) {
+                    updateProgress(90, 'HTML処理中...');
                     const html = await response.text();
+                    
+                    updateProgress(100, '完了！');
+                    
                     // 結果を新しいウィンドウで表示
                     const newWindow = window.open();
-                    newWindow.document.write(html);
-                    newWindow.document.close();
-                    
-                    showResult(resultBox, '軽量化完了！新しいウィンドウで結果を表示しました', 'success');
+                    if (newWindow) {
+                        newWindow.document.write(html);
+                        newWindow.document.close();
+                        
+                        setTimeout(() => {
+                            showResult(resultBox, '軽量化完了！新しいウィンドウで結果を表示しました', 'success');
+                        }, 500);
+                    } else {
+                        showResult(resultBox, '軽量化完了！ポップアップがブロックされました', 'success');
+                    }
                 } else {
                     const errorText = await response.text();
-                    showResult(resultBox, `エラー: ${response.status} - ${errorText}`, 'error');
+                    let errorMessage = `エラー: ${response.status}`;
+                    
+                    if (response.status === 504) {
+                        errorMessage += ' - タイムアウトしました。サーバーの応答に時間がかかりすぎています。';
+                    } else if (response.status === 404) {
+                        errorMessage += ' - URLが見つかりません。正しいURLを入力してください。';
+                    } else if (response.status === 403) {
+                        errorMessage += ' - アクセスが拒否されました。';
+                    } else if (response.status === 401) {
+                        errorMessage += ' - 認証に失敗しました。APIキーを確認してください。';
+                    } else if (response.status >= 500) {
+                        errorMessage += ' - サーバーエラーが発生しました。しばらく待ってから再試行してください。';
+                    } else {
+                        errorMessage += ` - ${errorText}`;
+                    }
+                    
+                    showResult(resultBox, errorMessage, 'error');
                 }
             } catch (error) {
-                showResult(resultBox, `処理中にエラーが発生しました: ${error.message}`, 'error');
+                if (error.name === 'AbortError') {
+                    showResult(resultBox, '処理がキャンセルされました', 'info');
+                } else if (error.name === 'TimeoutError') {
+                    showResult(resultBox, '処理がタイムアウトしました。ネットワーク接続を確認してください。', 'error');
+                } else if (error.message.includes('fetch')) {
+                    showResult(resultBox, 'ネットワークエラーが発生しました。インターネット接続を確認してください。', 'error');
+                } else {
+                    showResult(resultBox, `処理中にエラーが発生しました: ${error.message}`, 'error');
+                }
+            } finally {
+                currentController = null;
+                isProcessing = false;
+                clearInterval(progressInterval);
+                
+                // UIの状態をリセット
+                processBtn.disabled = false;
+                processBtn.textContent = '軽量化';
+            }
+        }
+
+        function showLoadingProgress(element, url) {
+            element.style.display = 'block';
+            element.className = 'result-box loading';
+            
+            const progressHTML = `
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span id="progressText">HTMLを取得中...</span>
+                        <button onclick="cancelProcessing()" class="cancel-btn">キャンセル</button>
+                    </div>
+                    <div class="progress-container">
+                        <div id="progressBar" class="progress-bar"></div>
+                        <div class="progress-text" id="progressPercent">0%</div>
+                    </div>
+                    <div style="margin-top: 5px; font-size: 12px; color: #666;">
+                        対象URL: ${url}
+                    </div>
+                </div>
+            `;
+            
+            element.innerHTML = progressHTML;
+            
+            // 進捗のアニメーション
+            let progress = 0;
+            const stages = [
+                { progress: 20, text: 'サーバーに接続中...' },
+                { progress: 40, text: 'HTMLを取得中...' },
+                { progress: 60, text: 'HTMLを解析中...' },
+                { progress: 80, text: 'リンクを処理中...' }
+            ];
+            
+            let stageIndex = 0;
+            progressInterval = setInterval(() => {
+                if (stageIndex < stages.length) {
+                    const stage = stages[stageIndex];
+                    if (progress < stage.progress) {
+                        progress += 2;
+                        updateProgress(progress, stage.text);
+                    } else {
+                        stageIndex++;
+                    }
+                }
+            }, 200);
+        }
+
+        function updateProgress(percent, text) {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const progressPercent = document.getElementById('progressPercent');
+            
+            if (progressBar) {
+                progressBar.style.width = percent + '%';
+            }
+            if (progressText) {
+                progressText.textContent = text;
+            }
+            if (progressPercent) {
+                progressPercent.textContent = percent + '%';
+            }
+        }
+
+        function cancelProcessing() {
+            if (currentController) {
+                currentController.abort();
             }
         }
 
@@ -298,7 +465,7 @@ pub fn get_home_page_html() -> &'static str {
             if (event.key === 'Enter') {
                 if (document.getElementById('apiKeySection').style.display !== 'none') {
                     saveApiKey();
-                } else if (document.getElementById('mainSection').style.display !== 'none') {
+                } else if (document.getElementById('mainSection').style.display !== 'none' && !isProcessing) {
                     processUrl();
                 }
             }

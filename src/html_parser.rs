@@ -1,5 +1,6 @@
 use url::Url;
 use reader_mode_maker;
+use std::time::Duration;
 
 // URLを正規化する関数（Rigil-Browserと同じ）
 pub fn normalize_url(name: &str) -> String {
@@ -202,7 +203,12 @@ pub fn parse_html_to_text(html: &str, base_url: &str, current_url: &str) -> Stri
 
 // HTMLを取得する関数（非同期版）
 pub async fn get_html(url: &str) -> Result<(String, String), String> {
-    let client = reqwest::Client::new();
+    // タイムアウト設定を含むHTTPクライアントを作成
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(30))  // 30秒のタイムアウト
+        .redirect(reqwest::redirect::Policy::limited(10))  // 最大10回のリダイレクト
+        .build()
+        .map_err(|e| format!("HTTPクライアントの作成エラー: {}", e))?;
 
     // URLからクエリパラメータを分離
     let parsed_url = match Url::parse(url) {
@@ -213,16 +219,43 @@ pub async fn get_html(url: &str) -> Result<(String, String), String> {
     let base_url = format!("{}://{}{}", parsed_url.scheme(), parsed_url.host_str().unwrap_or(""), parsed_url.path());
     let query_pairs: Vec<(String, String)> = parsed_url.query_pairs().into_owned().collect();
 
+    println!("HTMLを取得中: {}", url);
+    
     match client.get(&base_url).query(&query_pairs).send().await {
         Ok(response) => {
+            // ステータスコードをチェック
+            if !response.status().is_success() {
+                return Err(format!("HTTPエラー: {} - {}", response.status(), response.status().canonical_reason().unwrap_or("不明なエラー")));
+            }
+
             // リダイレクト後の最終URLを取得
             let final_url = response.url().to_string();
+            println!("最終URL: {}", final_url);
             
             match response.text().await {
-                Ok(text) => Ok((text, final_url)),
-                Err(e) => Err(format!("レスポンス読み取りエラー: {}", e)),
+                Ok(text) => {
+                    println!("HTML取得完了: {} bytes", text.len());
+                    Ok((text, final_url))
+                },
+                Err(e) => {
+                    if e.is_timeout() {
+                        Err("タイムアウトエラー: レスポンスの読み取りに時間がかかりすぎました".to_string())
+                    } else {
+                        Err(format!("レスポンス読み取りエラー: {}", e))
+                    }
+                }
             }
         }
-        Err(e) => Err(format!("リクエストエラー: {}", e)),
+        Err(e) => {
+            if e.is_timeout() {
+                Err("タイムアウトエラー: サーバーからの応答に時間がかかりすぎました".to_string())
+            } else if e.is_connect() {
+                Err("接続エラー: サーバーに接続できません".to_string())
+            } else if e.is_request() {
+                Err("リクエストエラー: 不正なリクエストです".to_string())
+            } else {
+                Err(format!("ネットワークエラー: {}", e))
+            }
+        }
     }
 }
