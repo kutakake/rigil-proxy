@@ -201,7 +201,7 @@ pub fn parse_html_to_text(html: &str, base_url: &str, current_url: &str) -> Stri
 }
 
 // HTMLを取得する関数（非同期版）
-pub async fn get_html(url: &str) -> Result<String, String> {
+pub async fn get_html(url: &str) -> Result<(String, String), String> {
     let client = reqwest::Client::new();
 
     // URLからクエリパラメータを分離
@@ -215,8 +215,11 @@ pub async fn get_html(url: &str) -> Result<String, String> {
 
     match client.get(&base_url).query(&query_pairs).send().await {
         Ok(response) => {
+            // リダイレクト後の最終URLを取得
+            let final_url = response.url().to_string();
+            
             match response.text().await {
-                Ok(text) => Ok(text),
+                Ok(text) => Ok((text, final_url)),
                 Err(e) => Err(format!("レスポンス読み取りエラー: {}", e)),
             }
         }

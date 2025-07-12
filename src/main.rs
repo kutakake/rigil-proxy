@@ -17,7 +17,7 @@ use tokio::sync::RwLock;
 
 #[tokio::main]
 async fn main() {
-    let addr = SocketAddr::from(([0, 0, 0, 0], 62223));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 80));
 
     // APIキーストアを初期化
     let api_key_store = Arc::new(RwLock::new(ApiKeyStore::load_from_file()));
@@ -115,12 +115,13 @@ async fn handle_proxy_request(req: Request<Body>, api_key_store: SharedApiKeySto
         }
 
         let normalized_url = normalize_url(target_url);
-        let base_url = get_base_url(&normalized_url);
-
+        
         match get_html(&normalized_url).await {
-            Ok(html_body) => {
+            Ok((html_body, final_url)) => {
+                // リダイレクト後の最終URLを使用してbase_urlを計算
+                let base_url = get_base_url(&final_url);
                 let original_size = html_body.len() as u64;
-                let processed_html = parse_html_to_text(&html_body, &base_url, &normalized_url);
+                let processed_html = parse_html_to_text(&html_body, &base_url, &final_url);
 
                 // APIキーがある場合は使用量を記録
                 if let Some(api_key) = params.get("api_key") {
@@ -456,7 +457,6 @@ async fn handle_delete_key_request(req: Request<Body>, api_key_store: SharedApiK
 
 async fn process_url_api(target_url: &str, api_key: Option<&String>, api_key_store: SharedApiKeyStore) -> ApiResponse {
     let normalized_url = normalize_url(target_url);
-    let base_url = get_base_url(&normalized_url);
 
     // APIキーの検証
     if let Some(key) = api_key {
@@ -477,9 +477,11 @@ async fn process_url_api(target_url: &str, api_key: Option<&String>, api_key_sto
     }
 
     match get_html(&normalized_url).await {
-        Ok(html_body) => {
+        Ok((html_body, final_url)) => {
+            // リダイレクト後の最終URLを使用してbase_urlを計算
+            let base_url = get_base_url(&final_url);
             let original_size = html_body.len() as u64;
-            let processed_html = parse_html_to_text(&html_body, &base_url, &normalized_url);
+            let processed_html = parse_html_to_text(&html_body, &base_url, &final_url);
             let processed_size = processed_html.len() as u64;
 
             // APIキーがある場合は使用量を記録
@@ -493,7 +495,7 @@ async fn process_url_api(target_url: &str, api_key: Option<&String>, api_key_sto
                 success: true,
                 data: Some(processed_html),
                 error: None,
-                original_url: Some(normalized_url),
+                original_url: Some(final_url),
                 processed_at: chrono::Utc::now().to_rfc3339(),
                 original_size_bytes: Some(original_size),
                 processed_size_bytes: Some(processed_size),
