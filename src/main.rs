@@ -34,7 +34,7 @@ async fn main() {
 
     let server = Server::bind(&addr).serve(make_svc);
 
-    println!("Rigil Proxy server running on port {}", addr);
+    println!("Rigil Proxy server running on port {}", PORT);
 
     if let Err(e) = server.await {
         eprintln!("Server error: {}", e);

@@ -165,7 +165,7 @@ pub fn get_home_page_html() -> &'static str {
 <body>
     <div class="container">
         <h1>Rigil Proxy - HTML軽量化プロキシ</h1>
-        
+
         <!-- APIキー入力セクション -->
         <div id="apiKeySection" class="api-key-section">
             <h2>APIキー設定</h2>
@@ -185,8 +185,12 @@ pub fn get_home_page_html() -> &'static str {
                 <input type="text" id="urlInput" placeholder="https://example.com" style="flex: 1;">
                 <button id="processBtn" onclick="processUrl()">軽量化</button>
             </div>
+            <br>
             <div id="processResult" class="result-box" style="display: none;"></div>
             <div id="currentApiKey" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
+            <div>
+                <button onclick="clearApiKey()" class="secondary-btn">APIキーをクリア</button>
+            </div>
         </div>
 
         <div class="api-key-section">
@@ -220,10 +224,10 @@ pub fn get_home_page_html() -> &'static str {
             <h3>APIキー管理</h3>
             <div class="endpoint">POST /api/keys/create</div>
             <p>新しいAPIキーを作成します。リクエストボディ: {"key": "your_api_key"}</p>
-            
+
             <div class="endpoint">GET /api/keys/usage?api_key=your_api_key</div>
             <p>指定したAPIキーの使用量を取得します。</p>
-            
+
             <div class="endpoint">GET /api/keys/list</div>
             <p>全てのAPIキーと使用量を一覧表示します。</p>
 
@@ -259,7 +263,7 @@ pub fn get_home_page_html() -> &'static str {
         function saveApiKey() {
             const apiKey = document.getElementById('apiKeyInput').value.trim();
             const statusBox = document.getElementById('apiKeyStatus');
-            
+
             if (!apiKey) {
                 showResult(statusBox, 'APIキーを入力してください', 'error');
                 return;
@@ -267,7 +271,7 @@ pub fn get_home_page_html() -> &'static str {
 
             localStorage.setItem(API_KEY_STORAGE_KEY, apiKey);
             showResult(statusBox, 'APIキーを保存しました', 'success');
-            
+
             setTimeout(() => {
                 showMainSection(apiKey);
             }, 1000);
@@ -277,7 +281,7 @@ pub fn get_home_page_html() -> &'static str {
             localStorage.removeItem(API_KEY_STORAGE_KEY);
             const statusBox = document.getElementById('apiKeyStatus');
             showResult(statusBox, 'APIキーをクリアしました', 'info');
-            
+
             setTimeout(() => {
                 showApiKeySection();
                 document.getElementById('apiKeyInput').value = '';
@@ -293,7 +297,7 @@ pub fn get_home_page_html() -> &'static str {
             const resultBox = document.getElementById('processResult');
             const processBtn = document.getElementById('processBtn');
             const apiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
-            
+
             if (!url) {
                 showResult(resultBox, 'URLを入力してください', 'error');
                 return;
@@ -316,30 +320,30 @@ pub fn get_home_page_html() -> &'static str {
 
             isProcessing = true;
             currentController = new AbortController();
-            
+
             // UIの状態を変更
             processBtn.disabled = true;
             processBtn.textContent = '処理中...';
-            
+
             showLoadingProgress(resultBox, url);
 
             try {
                 const response = await fetch(`/proxy?url=${encodeURIComponent(url)}&api_key=${encodeURIComponent(apiKey)}`, {
                     signal: currentController.signal
                 });
-                
+
                 if (response.ok) {
                     updateProgress(90, 'HTML処理中...');
                     const html = await response.text();
-                    
+
                     updateProgress(100, '完了！');
-                    
+
                     // 結果を新しいウィンドウで表示
                     const newWindow = window.open();
                     if (newWindow) {
                         newWindow.document.write(html);
                         newWindow.document.close();
-                        
+
                         setTimeout(() => {
                             showResult(resultBox, '軽量化完了！新しいウィンドウで結果を表示しました', 'success');
                         }, 500);
@@ -349,7 +353,7 @@ pub fn get_home_page_html() -> &'static str {
                 } else {
                     const errorText = await response.text();
                     let errorMessage = `エラー: ${response.status}`;
-                    
+
                     if (response.status === 504) {
                         errorMessage += ' - タイムアウトしました。サーバーの応答に時間がかかりすぎています。';
                     } else if (response.status === 404) {
@@ -363,7 +367,7 @@ pub fn get_home_page_html() -> &'static str {
                     } else {
                         errorMessage += ` - ${errorText}`;
                     }
-                    
+
                     showResult(resultBox, errorMessage, 'error');
                 }
             } catch (error) {
@@ -380,7 +384,7 @@ pub fn get_home_page_html() -> &'static str {
                 currentController = null;
                 isProcessing = false;
                 clearInterval(progressInterval);
-                
+
                 // UIの状態をリセット
                 processBtn.disabled = false;
                 processBtn.textContent = '軽量化';
@@ -390,7 +394,7 @@ pub fn get_home_page_html() -> &'static str {
         function showLoadingProgress(element, url) {
             element.style.display = 'block';
             element.className = 'result-box loading';
-            
+
             const progressHTML = `
                 <div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -406,9 +410,9 @@ pub fn get_home_page_html() -> &'static str {
                     </div>
                 </div>
             `;
-            
+
             element.innerHTML = progressHTML;
-            
+
             // 進捗のアニメーション
             let progress = 0;
             const stages = [
@@ -417,7 +421,7 @@ pub fn get_home_page_html() -> &'static str {
                 { progress: 60, text: 'HTMLを解析中...' },
                 { progress: 80, text: 'リンクを処理中...' }
             ];
-            
+
             let stageIndex = 0;
             progressInterval = setInterval(() => {
                 if (stageIndex < stages.length) {
@@ -436,7 +440,7 @@ pub fn get_home_page_html() -> &'static str {
             const progressBar = document.getElementById('progressBar');
             const progressText = document.getElementById('progressText');
             const progressPercent = document.getElementById('progressPercent');
-            
+
             if (progressBar) {
                 progressBar.style.width = percent + '%';
             }
@@ -875,7 +879,7 @@ pub fn get_admin_page_html() -> &'static str {
 <body>
     <div class="container">
         <h1>🔒 Rigil Proxy 管理者画面</h1>
-        
+
         <!-- ログイン画面 -->
         <div id="loginSection" class="login-section">
             <h2>管理者認証</h2>
@@ -918,25 +922,25 @@ pub fn get_admin_page_html() -> &'static str {
         function login() {
             const adminKey = document.getElementById('adminKeyInput').value.trim();
             const resultBox = document.getElementById('loginResult');
-            
+
             if (!adminKey) {
                 showResult(resultBox, '管理者キーを入力してください', 'error');
                 return;
             }
-            
+
             currentAdminKey = adminKey;
-            
+
             // 管理者キーを使ってAPIキー一覧を取得してみる（認証テスト）
             testAdminAccess();
         }
 
         async function testAdminAccess() {
             const resultBox = document.getElementById('loginResult');
-            
+
             try {
                 const response = await fetch(`/api/keys/list?admin_key=${encodeURIComponent(currentAdminKey)}`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     // 認証成功
                     document.getElementById('loginSection').style.display = 'none';
@@ -963,16 +967,16 @@ pub fn get_admin_page_html() -> &'static str {
         async function loadApiKeys() {
             const container = document.getElementById('apiKeysContainer');
             const resultBox = document.getElementById('apiKeysResult');
-            
+
             if (!currentAdminKey) {
                 logout();
                 return;
             }
-            
+
             try {
                 const response = await fetch(`/api/keys/list?admin_key=${encodeURIComponent(currentAdminKey)}`);
                 const data = await response.json();
-                
+
                 if (data.success && data.keys) {
                     if (data.keys.length === 0) {
                         container.innerHTML = '<p class="info">APIキーが登録されていません</p>';
@@ -1028,31 +1032,31 @@ pub fn get_admin_page_html() -> &'static str {
             const newKeyInput = document.getElementById('newApiKey');
             const resultBox = document.getElementById('createResult');
             const apiKey = newKeyInput.value.trim();
-            
+
             if (!apiKey) {
                 showResult(resultBox, 'APIキー名を入力してください', 'error');
                 return;
             }
-            
+
             if (!currentAdminKey) {
                 logout();
                 return;
             }
-            
+
             try {
                 const response = await fetch('/api/keys/create', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         admin_key: currentAdminKey,
-                        key: apiKey 
+                        key: apiKey
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showResult(resultBox, `APIキー "${apiKey}" を作成しました！`, 'success');
                     newKeyInput.value = '';
@@ -1069,21 +1073,21 @@ pub fn get_admin_page_html() -> &'static str {
             if (!confirm(`APIキー "${apiKey}" を削除してもよろしいですか？`)) {
                 return;
             }
-            
+
             if (!currentAdminKey) {
                 logout();
                 return;
             }
-            
+
             const resultBox = document.getElementById('apiKeysResult');
-            
+
             try {
                 const response = await fetch(`/api/keys/delete?admin_key=${encodeURIComponent(currentAdminKey)}&key=${encodeURIComponent(apiKey)}`, {
                     method: 'DELETE'
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showResult(resultBox, `APIキー "${apiKey}" を削除しました`, 'success');
                     loadApiKeys(); // 一覧を更新
@@ -1113,4 +1117,4 @@ pub fn get_admin_page_html() -> &'static str {
 </body>
 </html>
 "#
-} 
+}
