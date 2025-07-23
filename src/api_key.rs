@@ -11,8 +11,7 @@ pub struct ApiKeyStore {
     keys: HashMap<String, ApiKeyData>,
 }
 
-// … なんとなく、この鍵は特別
-const ADMIN_API_KEY: &str = "admin_rigil_proxy_master_key_2024";
+const ADMIN_API_KEY: &str = "change_me";
 
 impl ApiKeyStore {
     pub fn new() -> Self {

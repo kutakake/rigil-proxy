@@ -15,9 +15,11 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
+const PORT: u16 = 80;
+
 #[tokio::main]
 async fn main() {
-    let addr = SocketAddr::from(([0, 0, 0, 0], 80));
+    let addr = SocketAddr::from(([0, 0, 0, 0], PORT));
 
     // APIキーストアを初期化
     let api_key_store = Arc::new(RwLock::new(ApiKeyStore::load_from_file()));
@@ -32,11 +34,7 @@ async fn main() {
 
     let server = Server::bind(&addr).serve(make_svc);
 
-    println!("Rigil Proxy server running on http://{}", addr);
-    println!("Web UI: http://0.0.0.0:48588");
-    println!("API Documentation: http://0.0.0.0:48588/api/docs");
-    println!("Admin Panel: http://0.0.0.0:48588/admin");
-    println!("Admin Key: admin_rigil_proxy_master_key_2024");
+    println!("Rigil Proxy server running on port {}", addr);
 
     if let Err(e) = server.await {
         eprintln!("Server error: {}", e);
@@ -115,7 +113,7 @@ async fn handle_proxy_request(req: Request<Body>, api_key_store: SharedApiKeySto
         }
 
         let normalized_url = normalize_url(target_url);
-        
+
         match get_html(&normalized_url).await {
             Ok((html_body, final_url)) => {
                 // リダイレクト後の最終URLを使用してbase_urlを計算
