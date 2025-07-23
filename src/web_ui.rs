@@ -278,6 +278,10 @@ pub fn get_home_page_html() -> &'static str {
         }
 
         function clearApiKey() {
+            if (!confirm('APIキーをクリアしてもよろしいですか？クリア後、再度入力が必要です。')) {
+                return;
+            }
+            
             localStorage.removeItem(API_KEY_STORAGE_KEY);
             const statusBox = document.getElementById('apiKeyStatus');
             showResult(statusBox, 'APIキーをクリアしました', 'info');
