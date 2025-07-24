@@ -105,6 +105,7 @@ pub fn get_home_page_html() -> &'static str {
             <label for="apiKey"><strong>APIキー:</strong></label><br>
             <input type="text" id="apiKey" placeholder="APIキーを入力" style="width: 80%; margin-top: 5px;">
             <button onclick="saveApiKey()">保存</button>
+            <button onclick="deleteApiKey()" id="deleteApiKeyBtn" style="display: none; background-color: #dc3545;">削除</button>
         </div>
 
         <div class="url-input">
@@ -137,6 +138,7 @@ pub fn get_home_page_html() -> &'static str {
         window.onload = function() {
             if (savedApiKey) {
                 document.getElementById('apiKey').value = savedApiKey;
+                document.getElementById('deleteApiKeyBtn').style.display = 'inline-block';
             }
         };
 
@@ -162,6 +164,15 @@ pub fn get_home_page_html() -> &'static str {
             localStorage.setItem(STORAGE_KEY, apiKey);
             savedApiKey = apiKey;
             showResult('APIキーを保存しました', 'success');
+            document.getElementById('deleteApiKeyBtn').style.display = 'inline-block';
+        }
+
+        function deleteApiKey() {
+            localStorage.removeItem(STORAGE_KEY);
+            savedApiKey = '';
+            document.getElementById('apiKey').value = '';
+            showResult('APIキーを削除しました', 'success');
+            document.getElementById('deleteApiKeyBtn').style.display = 'none';
         }
 
         // ========== URL処理 ==========
