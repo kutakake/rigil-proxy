@@ -1,3 +1,4 @@
+// ========== ホームページ ==========
 pub fn get_home_page_html() -> &'static str {
     r#"
 <!DOCTYPE html>
@@ -118,12 +119,6 @@ pub fn get_home_page_html() -> &'static str {
             <a href="/admin">🔧 管理画面</a>
         </div>
 
-        <div class="info-box">
-            <strong>📝 デフォルト情報:</strong><br>
-            • デフォルトAPIキー: <code>default-api-key</code><br>
-            • 管理者キー: <code>admin123</code>
-        </div>
-
         <div class="api-info">
             <h3>API使用方法</h3>
             <p><strong>GET:</strong> <code>/proxy?url=https://example.com&api_key=your_key</code></p>
@@ -132,29 +127,47 @@ pub fn get_home_page_html() -> &'static str {
     </div>
 
     <script>
-        let savedApiKey = localStorage.getItem('rigil_api_key') || '';
+        // ========== 設定 ==========
+        const STORAGE_KEY = 'rigil_api_key';
         
-        // ページ読み込み時
+        // ========== 状態管理 ==========
+        let savedApiKey = localStorage.getItem(STORAGE_KEY) || '';
+        
+        // ========== 初期化 ==========
         window.onload = function() {
             if (savedApiKey) {
                 document.getElementById('apiKey').value = savedApiKey;
             }
         };
 
+        // ========== UI制御関数 ==========
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            result.textContent = message;
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+        }
+
+        function getInputValue(id) {
+            return document.getElementById(id).value.trim();
+        }
+
+        // ========== APIキー管理 ==========
         function saveApiKey() {
-            const apiKey = document.getElementById('apiKey').value.trim();
+            const apiKey = getInputValue('apiKey');
             if (!apiKey) {
                 showResult('APIキーを入力してください', 'error');
                 return;
             }
-            localStorage.setItem('rigil_api_key', apiKey);
+            localStorage.setItem(STORAGE_KEY, apiKey);
             savedApiKey = apiKey;
             showResult('APIキーを保存しました', 'success');
         }
 
+        // ========== URL処理 ==========
         async function processUrl() {
-            const url = document.getElementById('url').value.trim();
-            const apiKey = document.getElementById('apiKey').value.trim() || savedApiKey;
+            const url = getInputValue('url');
+            const apiKey = getInputValue('apiKey') || savedApiKey;
 
             if (!url) {
                 showResult('URLを入力してください', 'error');
@@ -190,14 +203,7 @@ pub fn get_home_page_html() -> &'static str {
             }
         }
 
-        function showResult(message, type) {
-            const result = document.getElementById('result');
-            result.textContent = message;
-            result.className = `result ${type}`;
-            result.style.display = 'block';
-        }
-
-        // Enterキーでの処理
+        // ========== キーボードイベント ==========
         document.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 if (document.activeElement.id === 'apiKey') {
@@ -213,7 +219,7 @@ pub fn get_home_page_html() -> &'static str {
     "#
 }
 
-// API ドキュメント（簡素化版）
+// ========== APIドキュメント ==========
 pub fn get_api_docs_html() -> &'static str {
     r#"
 <!DOCTYPE html>
@@ -254,7 +260,7 @@ pub fn get_api_docs_html() -> &'static str {
     "#
 }
 
-// ログイン機能付き管理画面
+// ========== 管理画面 ==========
 pub fn get_admin_page_html() -> &'static str {
     r#"
 <!DOCTYPE html>
@@ -419,15 +425,6 @@ pub fn get_admin_page_html() -> &'static str {
             align-items: center;
             margin-bottom: 20px;
         }
-        .info-box {
-            background: #d1ecf1;
-            color: #0c5460;
-            padding: 15px;
-            border-radius: 4px;
-            border: 1px solid #bee5eb;
-            margin: 20px 0;
-            font-size: 14px;
-        }
     </style>
 </head>
 <body>
@@ -505,12 +502,22 @@ pub fn get_admin_page_html() -> &'static str {
     </div>
 
     <script>
+        // ========== 設定 ==========
+        const ADMIN_SESSION_KEY = 'rigil_admin_key';
+        const API_ENDPOINTS = {
+            login: '/api/admin/login',
+            statistics: '/api/statistics',
+            keysList: '/api/keys/list',
+            keysCreate: '/api/keys/create',
+            keysDelete: '/api/keys/delete'
+        };
+
+        // ========== 状態管理 ==========
         let currentAdminKey = '';
 
-        // ページ読み込み時
+        // ========== 初期化 ==========
         window.onload = function() {
-            // セッションから管理者キーを復元
-            const savedAdminKey = sessionStorage.getItem('rigil_admin_key');
+            const savedAdminKey = sessionStorage.getItem(ADMIN_SESSION_KEY);
             if (savedAdminKey) {
                 currentAdminKey = savedAdminKey;
                 showAdminSection();
@@ -519,6 +526,7 @@ pub fn get_admin_page_html() -> &'static str {
             }
         };
 
+        // ========== UI制御 ==========
         function showLoginSection() {
             document.getElementById('loginSection').style.display = 'block';
             document.getElementById('adminSection').style.display = 'none';
@@ -531,6 +539,17 @@ pub fn get_admin_page_html() -> &'static str {
             loadStatistics();
         }
 
+        function showResult(element, message, type) {
+            element.textContent = message;
+            element.className = `result ${type}`;
+            element.style.display = 'block';
+        }
+
+        function hideResult(element) {
+            element.style.display = 'none';
+        }
+
+        // ========== 認証機能 ==========
         async function login() {
             const adminKey = document.getElementById('adminKeyInput').value.trim();
             const resultBox = document.getElementById('loginResult');
@@ -541,28 +560,20 @@ pub fn get_admin_page_html() -> &'static str {
             }
 
             try {
-                const response = await fetch('/api/admin/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        admin_key: adminKey
-                    })
+                const response = await apiRequest(API_ENDPOINTS.login, 'POST', {
+                    admin_key: adminKey
                 });
 
-                const data = await response.json();
-
-                if (data.success) {
+                if (response.success) {
                     currentAdminKey = adminKey;
-                    sessionStorage.setItem('rigil_admin_key', adminKey);
+                    sessionStorage.setItem(ADMIN_SESSION_KEY, adminKey);
                     showResult(resultBox, 'ログイン成功！', 'success');
                     
                     setTimeout(() => {
                         showAdminSection();
                     }, 1000);
                 } else {
-                    showResult(resultBox, `ログイン失敗: ${data.error}`, 'error');
+                    showResult(resultBox, `ログイン失敗: ${response.error}`, 'error');
                 }
             } catch (error) {
                 showResult(resultBox, `ネットワークエラー: ${error.message}`, 'error');
@@ -571,98 +582,82 @@ pub fn get_admin_page_html() -> &'static str {
 
         function logout() {
             currentAdminKey = '';
-            sessionStorage.removeItem('rigil_admin_key');
+            sessionStorage.removeItem(ADMIN_SESSION_KEY);
             document.getElementById('adminKeyInput').value = '';
             showLoginSection();
         }
 
-        async function loadStatistics() {
-            if (!currentAdminKey) {
-                logout();
-                return;
+        // ========== API通信 ==========
+        async function apiRequest(url, method = 'GET', body = null) {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            };
+
+            if (body) {
+                options.body = JSON.stringify(body);
             }
 
-            try {
-                const response = await fetch(`/api/statistics?admin_key=${encodeURIComponent(currentAdminKey)}`);
-                const data = await response.json();
+            const response = await fetch(url, options);
+            return await response.json();
+        }
 
-                if (data.success && data.statistics) {
-                    const stats = data.statistics;
-                    document.getElementById('totalKeys').textContent = stats.total_keys.toLocaleString();
-                    document.getElementById('totalOriginalSize').textContent = formatBytes(stats.total_original_bytes);
-                    document.getElementById('totalProcessedSize').textContent = formatBytes(stats.total_processed_bytes);
-                    document.getElementById('compressionRatio').textContent = stats.compression_ratio + '%';
-                    document.getElementById('totalCompressions').textContent = stats.total_compressions.toLocaleString();
-                } else if (data.error && data.error.includes('管理者権限')) {
-                    logout();
+        async function adminApiRequest(url) {
+            if (!currentAdminKey) {
+                logout();
+                return null;
+            }
+
+            const urlWithAuth = `${url}${url.includes('?') ? '&' : '?'}admin_key=${encodeURIComponent(currentAdminKey)}`;
+            const response = await fetch(urlWithAuth);
+            const data = await response.json();
+
+            if (data.error && data.error.includes('管理者権限')) {
+                logout();
+                return null;
+            }
+
+            return data;
+        }
+
+        // ========== 統計機能 ==========
+        async function loadStatistics() {
+            try {
+                const data = await adminApiRequest(API_ENDPOINTS.statistics);
+                if (data && data.success && data.statistics) {
+                    updateStatisticsDisplay(data.statistics);
                 }
             } catch (error) {
                 console.error('統計データの読み込みエラー:', error);
             }
         }
 
-        async function loadApiKeys() {
-            if (!currentAdminKey) {
-                logout();
-                return;
-            }
+        function updateStatisticsDisplay(stats) {
+            document.getElementById('totalKeys').textContent = stats.total_keys.toLocaleString();
+            document.getElementById('totalOriginalSize').textContent = formatBytes(stats.total_original_bytes);
+            document.getElementById('totalProcessedSize').textContent = formatBytes(stats.total_processed_bytes);
+            document.getElementById('compressionRatio').textContent = stats.compression_ratio + '%';
+            document.getElementById('totalCompressions').textContent = stats.total_compressions.toLocaleString();
+        }
 
+        // ========== APIキー管理 ==========
+        async function loadApiKeys() {
             const container = document.getElementById('apiKeysContainer');
             const resultBox = document.getElementById('apiKeysResult');
 
             try {
-                const response = await fetch(`/api/keys/list?admin_key=${encodeURIComponent(currentAdminKey)}`);
-                const data = await response.json();
+                const data = await adminApiRequest(API_ENDPOINTS.keysList);
+                if (!data) return;
 
                 if (data.success && data.keys) {
                     if (data.keys.length === 0) {
                         container.innerHTML = '<p style="color: #666;">APIキーが登録されていません</p>';
                     } else {
-                        container.innerHTML = `
-                            <table class="api-key-table">
-                                <thead>
-                                    <tr>
-                                        <th>APIキー</th>
-                                        <th>使用量 (原データ)</th>
-                                        <th>圧縮後容量</th>
-                                        <th>圧縮効率</th>
-                                        <th>圧縮回数</th>
-                                        <th>作成日</th>
-                                        <th>最終使用</th>
-                                        <th>操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${data.keys.map(key => {
-                                        const originalBytes = key.total_original_bytes;
-                                        const processedBytes = key.total_processed_bytes;
-                                        const compressionRatio = originalBytes > 0 ? 
-                                            ((originalBytes - processedBytes) / originalBytes * 100) : 0;
-                                        
-                                        return `
-                                            <tr>
-                                                <td><code>${key.key}</code></td>
-                                                <td style="font-family: monospace;">${formatBytes(originalBytes)}</td>
-                                                <td style="font-family: monospace;">${formatBytes(processedBytes)}</td>
-                                                <td style="color: ${compressionRatio > 50 ? '#28a745' : compressionRatio > 20 ? '#fd7e14' : '#dc3545'}; font-weight: bold;">
-                                                    ${compressionRatio.toFixed(1)}%
-                                                </td>
-                                                <td>${key.compression_count.toLocaleString()} 回</td>
-                                                <td>${new Date(key.created_at).toLocaleString('ja-JP')}</td>
-                                                <td>${key.last_used ? new Date(key.last_used).toLocaleString('ja-JP') : '未使用'}</td>
-                                                <td>
-                                                    <button onclick="deleteApiKey('${key.key}')" class="danger-btn">削除</button>
-                                                </td>
-                                            </tr>
-                                        `;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        `;
+                        container.innerHTML = generateApiKeysTable(data.keys);
                     }
                     hideResult(resultBox);
-                } else if (data.error && data.error.includes('管理者権限')) {
-                    logout();
                 } else {
                     showResult(resultBox, `エラー: ${data.error}`, 'error');
                     container.innerHTML = '';
@@ -671,6 +666,52 @@ pub fn get_admin_page_html() -> &'static str {
                 showResult(resultBox, `ネットワークエラー: ${error.message}`, 'error');
                 container.innerHTML = '';
             }
+        }
+
+        function generateApiKeysTable(keys) {
+            const rows = keys.map(key => {
+                const originalBytes = key.total_original_bytes;
+                const processedBytes = key.total_processed_bytes;
+                const compressionRatio = originalBytes > 0 ? 
+                    ((originalBytes - processedBytes) / originalBytes * 100) : 0;
+                
+                return `
+                    <tr>
+                        <td><code>${key.key}</code></td>
+                        <td style="font-family: monospace;">${formatBytes(originalBytes)}</td>
+                        <td style="font-family: monospace;">${formatBytes(processedBytes)}</td>
+                        <td style="color: ${getCompressionColor(compressionRatio)}; font-weight: bold;">
+                            ${compressionRatio.toFixed(1)}%
+                        </td>
+                        <td>${key.compression_count.toLocaleString()} 回</td>
+                        <td>${new Date(key.created_at).toLocaleString('ja-JP')}</td>
+                        <td>${key.last_used ? new Date(key.last_used).toLocaleString('ja-JP') : '未使用'}</td>
+                        <td>
+                            <button onclick="deleteApiKey('${key.key}')" class="danger-btn">削除</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            return `
+                <table class="api-key-table">
+                    <thead>
+                        <tr>
+                            <th>APIキー</th>
+                            <th>使用量 (原データ)</th>
+                            <th>圧縮後容量</th>
+                            <th>圧縮効率</th>
+                            <th>圧縮回数</th>
+                            <th>作成日</th>
+                            <th>最終使用</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                    </tbody>
+                </table>
+            `;
         }
 
         function generateRandomKey() {
@@ -693,23 +734,15 @@ pub fn get_admin_page_html() -> &'static str {
             }
 
             try {
-                const response = await fetch('/api/keys/create', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        key: apiKey
-                    })
+                const data = await apiRequest(API_ENDPOINTS.keysCreate, 'POST', {
+                    key: apiKey
                 });
-
-                const data = await response.json();
 
                 if (data.success) {
                     showResult(resultBox, `APIキー "${apiKey}" を追加しました！`, 'success');
                     newKeyInput.value = '';
-                    loadApiKeys(); // 一覧を更新
-                    loadStatistics(); // 統計を更新
+                    loadApiKeys();
+                    loadStatistics();
                 } else {
                     showResult(resultBox, `エラー: ${data.error}`, 'error');
                 }
@@ -723,24 +756,17 @@ pub fn get_admin_page_html() -> &'static str {
                 return;
             }
 
-            if (!currentAdminKey) {
-                logout();
-                return;
-            }
-
             const resultBox = document.getElementById('apiKeysResult');
 
             try {
-                const response = await fetch(`/api/keys/delete?key=${encodeURIComponent(apiKey)}&admin_key=${encodeURIComponent(currentAdminKey)}`, {
-                    method: 'DELETE'
-                });
-
+                const url = `${API_ENDPOINTS.keysDelete}?key=${encodeURIComponent(apiKey)}&admin_key=${encodeURIComponent(currentAdminKey)}`;
+                const response = await fetch(url, { method: 'DELETE' });
                 const data = await response.json();
 
                 if (data.success) {
                     showResult(resultBox, `APIキー "${apiKey}" を削除しました`, 'success');
-                    loadApiKeys(); // 一覧を更新
-                    loadStatistics(); // 統計を更新
+                    loadApiKeys();
+                    loadStatistics();
                 } else if (data.error && data.error.includes('管理者権限')) {
                     logout();
                 } else {
@@ -751,22 +777,19 @@ pub fn get_admin_page_html() -> &'static str {
             }
         }
 
-        function showResult(element, message, type) {
-            element.textContent = message;
-            element.className = `result ${type}`;
-            element.style.display = 'block';
-        }
-
-        function hideResult(element) {
-            element.style.display = 'none';
-        }
-
+        // ========== ユーティリティ関数 ==========
         function formatBytes(bytes) {
             if (bytes === 0) return '0 bytes';
             const k = 1024;
             const sizes = ['bytes', 'KB', 'MB', 'GB', 'TB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function getCompressionColor(ratio) {
+            if (ratio > 50) return '#28a745';
+            if (ratio > 20) return '#fd7e14';
+            return '#dc3545';
         }
     </script>
 </body>
