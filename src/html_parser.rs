@@ -169,7 +169,33 @@ pub fn parse_html_to_text(html: &str, base_url: &str, current_url: &str) -> Stri
     let mut formatted_text = String::new();
 
     // 基本的なHTMLヘッダーを追加
-    formatted_text.push_str("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;line-height:1.6;margin:20px;color:#333;background-color:#fafafa;max-width:100%;overflow-x:auto;} a{color:#666;text-decoration:underline;margin-right:8px;word-break:break-word;max-width:100%;display:inline-block;} a:hover{color:#333;}</style></head><body>");
+    let javascript_code = r#"<script>
+function addApiKeyToProxyLinks(){
+    // URLパラメータからAPIキーを取得
+    const urlParams=new URLSearchParams(window.location.search);
+    let apiKey=urlParams.get('api_key');
+    
+    // URLパラメータにない場合はLocalStorageから取得
+    if(!apiKey){
+        apiKey=localStorage.getItem('rigil_proxy_api_key');
+    }
+    
+    if(apiKey){
+        const proxyLinks=document.querySelectorAll('a[href^="/proxy?url="]');
+        proxyLinks.forEach(link=>{
+            const href=link.getAttribute('href');
+            if(href&&!href.includes('api_key=')){
+                link.setAttribute('href',href+'&api_key='+encodeURIComponent(apiKey));
+            }
+        });
+    }
+}
+document.addEventListener('DOMContentLoaded',addApiKeyToProxyLinks);
+</script>"#;
+    
+    formatted_text.push_str("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;line-height:1.6;margin:20px;color:#333;background-color:#fafafa;max-width:100%;overflow-x:auto;} a{color:#666;text-decoration:underline;margin-right:8px;word-break:break-word;max-width:100%;display:inline-block;} a:hover{color:#333;}</style>");
+    formatted_text.push_str(javascript_code);
+    formatted_text.push_str("</head><body>");
 
     let culled_html = reader_mode_maker::culling(html);
     let contents: Vec<char> = culled_html.chars().collect();

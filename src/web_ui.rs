@@ -169,7 +169,7 @@ pub fn get_home_page_html() -> &'static str {
         <!-- APIキー入力セクション -->
         <div id="apiKeySection" class="api-key-section">
             <h2>APIキー設定</h2>
-            <p>APIキーを入力してください（初回のみ）：</p>
+            <p>⚠️ APIキーが必須です。圧縮機能を使用するにはAPIキーを入力してください：</p>
             <div class="api-key-form">
                 <input type="text" id="apiKeyInput" placeholder="あなたのAPIキーを入力">
                 <button onclick="saveApiKey()">保存</button>
@@ -210,16 +210,16 @@ pub fn get_home_page_html() -> &'static str {
 
             <h3>HTML軽量化 (GET)</h3>
             <div class="endpoint">GET /proxy?url=https://example.com&api_key=your_api_key</div>
-            <p>軽量化されたHTMLを直接返します。api_keyはオプションです。</p>
+            <p>軽量化されたHTMLを直接返します。<strong>api_keyは必須です。</strong></p>
 
             <h3>JSON API (GET)</h3>
             <div class="endpoint">GET /api/process?url=https://example.com&api_key=your_api_key</div>
-            <p>JSON形式で結果を返します。api_keyはオプションです。</p>
+            <p>JSON形式で結果を返します。<strong>api_keyは必須です。</strong></p>
 
             <h3>JSON API (POST)</h3>
             <div class="endpoint">POST /api/process</div>
             <p>リクエストボディ: {"url": "https://example.com", "format": "json"}</p>
-            <p>APIキーはX-API-Keyヘッダーで指定可能です。</p>
+            <p><strong>APIキーはX-API-Keyヘッダーで必須です。</strong></p>
 
             <h3>APIキー管理</h3>
             <div class="endpoint">POST /api/keys/create</div>
@@ -579,7 +579,7 @@ pub fn get_api_docs_html() -> &'static str {
             <p><strong>パラメータ:</strong></p>
             <ul>
                 <li><code>url</code> (必須): 軽量化したいWebページのURL</li>
-                <li><code>api_key</code> (オプション): APIキー</li>
+                <li><code>api_key</code> (必須): APIキー</li>
             </ul>
             <p><strong>レスポンス:</strong> 軽量化されたHTML (Content-Type: text/html)</p>
             <p><strong>例:</strong></p>
@@ -592,7 +592,7 @@ pub fn get_api_docs_html() -> &'static str {
             <p><strong>パラメータ:</strong></p>
             <ul>
                 <li><code>url</code> (必須): 軽量化したいWebページのURL</li>
-                <li><code>api_key</code> (オプション): APIキー</li>
+                <li><code>api_key</code> (必須): APIキー</li>
             </ul>
             <p><strong>レスポンス:</strong> JSON形式の結果</p>
             <p><strong>例:</strong></p>
@@ -616,7 +616,7 @@ pub fn get_api_docs_html() -> &'static str {
             <p><strong>Content-Type:</strong> application/json</p>
             <p><strong>ヘッダー:</strong></p>
             <ul>
-                <li><code>X-API-Key</code> (オプション): APIキー</li>
+                <li><code>X-API-Key</code> (必須): APIキー</li>
             </ul>
             <p><strong>リクエストボディ:</strong></p>
             <pre>{
@@ -819,9 +819,10 @@ pub fn get_admin_page_html() -> &'static str {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
+            font-size: 14px;
         }
         .api-key-table th, .api-key-table td {
-            padding: 12px;
+            padding: 8px 12px;
             text-align: left;
             border-bottom: 1px solid #ddd;
         }
@@ -903,6 +904,30 @@ pub fn get_admin_page_html() -> &'static str {
                 <button onclick="logout()" class="danger-btn">ログアウト</button>
             </div>
 
+            <h2>📊 圧縮統計サマリー</h2>
+            <div id="statisticsContainer" style="display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap;">
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border: 1px solid #e9ecef; min-width: 200px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: bold; color: #007bff;" id="totalKeys">-</div>
+                    <div style="color: #666; font-size: 14px;">総APIキー数</div>
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border: 1px solid #e9ecef; min-width: 200px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: bold; color: #dc3545;" id="totalOriginalSize">-</div>
+                    <div style="color: #666; font-size: 14px;">総原データ容量</div>
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border: 1px solid #e9ecef; min-width: 200px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: bold; color: #28a745;" id="totalProcessedSize">-</div>
+                    <div style="color: #666; font-size: 14px;">総圧縮後容量</div>
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border: 1px solid #e9ecef; min-width: 200px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: bold; color: #007bff;" id="overallCompressionRatio">-</div>
+                    <div style="color: #666; font-size: 14px;">全体圧縮効率</div>
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border: 1px solid #e9ecef; min-width: 200px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: bold; color: #ffc107;" id="totalCompressions">-</div>
+                    <div style="color: #666; font-size: 14px;">総圧縮回数</div>
+                </div>
+            </div>
+
             <h2>📋 APIキー一覧</h2>
             <div id="apiKeysResult" class="result-box" style="display: none;"></div>
             <div id="apiKeysContainer">
@@ -982,6 +1007,27 @@ pub fn get_admin_page_html() -> &'static str {
                 const data = await response.json();
 
                 if (data.success && data.keys) {
+                    // 統計情報を計算
+                    let totalOriginalBytes = 0;
+                    let totalProcessedBytes = 0;
+                    let totalCompressions = 0;
+                    
+                    data.keys.forEach(key => {
+                        totalOriginalBytes += key.total_original_bytes || key.total_bytes_processed || 0;
+                        totalProcessedBytes += key.total_processed_bytes || 0;
+                        totalCompressions += key.compression_count || 0;
+                    });
+                    
+                    const overallCompressionRatio = totalOriginalBytes > 0 ? 
+                        ((totalOriginalBytes - totalProcessedBytes) / totalOriginalBytes * 100) : 0;
+                    
+                    // 統計情報を表示
+                    document.getElementById('totalKeys').textContent = data.keys.length.toLocaleString();
+                    document.getElementById('totalOriginalSize').textContent = formatBytes(totalOriginalBytes);
+                    document.getElementById('totalProcessedSize').textContent = formatBytes(totalProcessedBytes);
+                    document.getElementById('overallCompressionRatio').textContent = overallCompressionRatio.toFixed(1) + '%';
+                    document.getElementById('totalCompressions').textContent = totalCompressions.toLocaleString();
+                    
                     if (data.keys.length === 0) {
                         container.innerHTML = '<p class="info">APIキーが登録されていません</p>';
                     } else {
@@ -990,24 +1036,39 @@ pub fn get_admin_page_html() -> &'static str {
                                 <thead>
                                     <tr>
                                         <th>APIキー</th>
-                                        <th>使用量 (bytes)</th>
+                                        <th>使用量 (原データ)</th>
+                                        <th>圧縮後容量</th>
+                                        <th>圧縮効率</th>
+                                        <th>圧縮回数</th>
                                         <th>作成日</th>
                                         <th>最終使用</th>
                                         <th>操作</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${data.keys.map(key => `
-                                        <tr>
-                                            <td><code>${key.key}</code></td>
-                                            <td>${key.total_bytes_processed.toLocaleString()}</td>
-                                            <td>${new Date(key.created_at).toLocaleString('ja-JP')}</td>
-                                            <td>${key.last_used ? new Date(key.last_used).toLocaleString('ja-JP') : '未使用'}</td>
-                                            <td>
-                                                <button onclick="deleteApiKey('${key.key}')" class="danger-btn" style="padding: 6px 12px; margin: 0;">削除</button>
-                                            </td>
-                                        </tr>
-                                    `).join('')}
+                                    ${data.keys.map(key => {
+                                        const originalBytes = key.total_original_bytes || key.total_bytes_processed;
+                                        const processedBytes = key.total_processed_bytes || 0;
+                                        const compressionRatio = originalBytes > 0 ? ((originalBytes - processedBytes) / originalBytes * 100) : 0;
+                                        const compressionCount = key.compression_count || 0;
+                                        
+                                        return `
+                                            <tr>
+                                                <td><code>${key.key}</code></td>
+                                                <td style="font-family: monospace;">${formatBytes(originalBytes)}</td>
+                                                <td style="font-family: monospace;">${formatBytes(processedBytes)}</td>
+                                                <td style="color: ${compressionRatio > 50 ? '#28a745' : compressionRatio > 20 ? '#ffc107' : '#dc3545'}; font-weight: bold;">
+                                                    ${compressionRatio.toFixed(1)}%
+                                                </td>
+                                                <td>${compressionCount.toLocaleString()} 回</td>
+                                                <td>${new Date(key.created_at).toLocaleString('ja-JP')}</td>
+                                                <td>${key.last_used ? new Date(key.last_used).toLocaleString('ja-JP') : '未使用'}</td>
+                                                <td>
+                                                    <button onclick="deleteApiKey('${key.key}')" class="danger-btn" style="padding: 6px 12px; margin: 0;">削除</button>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
                                 </tbody>
                             </table>
                         `;
@@ -1111,6 +1172,14 @@ pub fn get_admin_page_html() -> &'static str {
 
         function hideResult(element) {
             element.style.display = 'none';
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 bytes';
+            const k = 1024;
+            const sizes = ['bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
         }
 
         // ページ読み込み時の処理

@@ -4,6 +4,9 @@ use serde::{Deserialize, Serialize};
 pub struct ApiKeyData {
     pub key: String,
     pub total_bytes_processed: u64,
+    pub total_original_bytes: u64,
+    pub total_processed_bytes: u64,
+    pub compression_count: u64,
     pub created_at: String,
     pub last_used: Option<String>,
 }

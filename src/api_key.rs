@@ -50,6 +50,9 @@ impl ApiKeyStore {
         let api_key_data = ApiKeyData {
             key: key.clone(),
             total_bytes_processed: 0,
+            total_original_bytes: 0,
+            total_processed_bytes: 0,
+            compression_count: 0,
             created_at: chrono::Utc::now().to_rfc3339(),
             last_used: None,
         };
@@ -62,10 +65,13 @@ impl ApiKeyStore {
         self.keys.contains_key(key)
     }
 
-    pub fn add_usage(&mut self, key: &str, bytes: u64) {
+    pub fn add_usage(&mut self, key: &str, original_bytes: u64, processed_bytes: u64) {
         if let Some(api_key_data) = self.keys.get_mut(key) {
-            println!("{}bytes", bytes);
-            api_key_data.total_bytes_processed += bytes;
+            println!("元のサイズ: {}bytes, 圧縮後: {}bytes", original_bytes, processed_bytes);
+            api_key_data.total_bytes_processed += original_bytes;
+            api_key_data.total_original_bytes += original_bytes;
+            api_key_data.total_processed_bytes += processed_bytes;
+            api_key_data.compression_count += 1;
             api_key_data.last_used = Some(chrono::Utc::now().to_rfc3339());
             self.save_to_file();
         }

@@ -98,19 +98,28 @@ async fn handle_proxy_request(req: Request<Body>, api_key_store: SharedApiKeySto
             .collect();
 
     if let Some(target_url) = params.get("url") {
-        // APIキーのチェック（オプション）
-        if let Some(api_key) = params.get("api_key") {
-            let store = api_key_store.read().await;
-            if !store.validate_key(api_key) {
-                drop(store);
-                let error_html = "<html><head><meta charset=\"UTF-8\"></head><body><h1>エラー</h1><p>無効なAPIキーです</p></body></html>";
+        // APIキーのチェック（必須）
+        let api_key = match params.get("api_key") {
+            Some(key) => key,
+            None => {
+                let error_html = "<html><head><meta charset=\"UTF-8\"></head><body><h1>認証エラー</h1><p>APIキーが必要です。<br><a href=\"/\">ホーム画面</a>でAPIキーを設定してください。</p></body></html>";
                 let mut response = Response::new(Body::from(error_html));
                 *response.status_mut() = StatusCode::UNAUTHORIZED;
                 response.headers_mut().insert("content-type", "text/html; charset=utf-8".parse().unwrap());
                 return Ok(response);
             }
+        };
+
+        let store = api_key_store.read().await;
+        if !store.validate_key(api_key) {
             drop(store);
+            let error_html = "<html><head><meta charset=\"UTF-8\"></head><body><h1>認証エラー</h1><p>無効なAPIキーです。<br><a href=\"/\">ホーム画面</a>で正しいAPIキーを設定してください。</p></body></html>";
+            let mut response = Response::new(Body::from(error_html));
+            *response.status_mut() = StatusCode::UNAUTHORIZED;
+            response.headers_mut().insert("content-type", "text/html; charset=utf-8".parse().unwrap());
+            return Ok(response);
         }
+        drop(store);
 
         let normalized_url = normalize_url(target_url);
 
@@ -121,12 +130,11 @@ async fn handle_proxy_request(req: Request<Body>, api_key_store: SharedApiKeySto
                 let original_size = html_body.len() as u64;
                 let processed_html = parse_html_to_text(&html_body, &base_url, &final_url);
 
-                // APIキーがある場合は使用量を記録
-                if let Some(api_key) = params.get("api_key") {
-                    let mut store = api_key_store.write().await;
-                    store.add_usage(api_key, original_size);
-                    drop(store);
-                }
+                // 使用量を記録（APIキーは必須なので必ず記録）
+                let processed_size = processed_html.len() as u64;
+                let mut store = api_key_store.write().await;
+                store.add_usage(api_key, original_size, processed_size);
+                drop(store);
 
                 let mut response = Response::new(Body::from(processed_html));
                 response.headers_mut().insert("content-type", "text/html; charset=utf-8".parse().unwrap());
@@ -143,8 +151,9 @@ async fn handle_proxy_request(req: Request<Body>, api_key_store: SharedApiKeySto
             }
         }
     } else {
-        let error_html = "<html><head><meta charset=\"UTF-8\"></head><body><h1>エラー</h1><p>URLパラメータが必要です</p></body></html>";
+        let error_html = "<html><head><meta charset=\"UTF-8\"></head><body><h1>パラメータエラー</h1><p>URLパラメータが必要です。<br><a href=\"/\">ホーム画面</a>から正しくアクセスしてください。</p></body></html>";
         let mut response = Response::new(Body::from(error_html));
+        *response.status_mut() = StatusCode::BAD_REQUEST;
         response.headers_mut().insert("content-type", "text/html; charset=utf-8".parse().unwrap());
         Ok(response)
     }
@@ -158,7 +167,27 @@ async fn handle_api_get_request(req: Request<Body>, api_key_store: SharedApiKeyS
             .collect();
 
     if let Some(target_url) = params.get("url") {
-        let api_key = params.get("api_key");
+        // APIキーのチェック（必須）
+        let api_key = match params.get("api_key") {
+            Some(key) => key,
+            None => {
+                let error_response = ApiResponse {
+                    success: false,
+                    data: None,
+                    error: Some("APIキーが必要です".to_string()),
+                    original_url: Some(target_url.clone()),
+                    processed_at: chrono::Utc::now().to_rfc3339(),
+                    original_size_bytes: None,
+                    processed_size_bytes: None,
+                };
+                let json_response = serde_json::to_string(&error_response).unwrap();
+                let mut resp = Response::new(Body::from(json_response));
+                *resp.status_mut() = StatusCode::UNAUTHORIZED;
+                resp.headers_mut().insert("content-type", "application/json; charset=utf-8".parse().unwrap());
+                return Ok(resp);
+            }
+        };
+        
         let response = process_url_api(target_url, api_key, api_key_store.clone()).await;
         let json_response = serde_json::to_string(&response).unwrap_or_else(|_| {
             r#"{"success":false,"data":null,"error":"JSON serialization error","original_url":null,"processed_at":""}"#.to_string()
@@ -195,7 +224,28 @@ async fn handle_api_post_request(req: Request<Body>, api_key_store: SharedApiKey
 
     match serde_json::from_str::<ApiRequest>(&body_str) {
         Ok(api_req) => {
-            let response = process_url_api(&api_req.url, api_key_from_header.as_ref(), api_key_store.clone()).await;
+            // APIキーのチェック（必須）
+            let api_key = match api_key_from_header.as_ref() {
+                Some(key) => key,
+                None => {
+                    let error_response = ApiResponse {
+                        success: false,
+                        data: None,
+                        error: Some("APIキーが必要です（X-API-Keyヘッダーで指定してください）".to_string()),
+                        original_url: Some(api_req.url.clone()),
+                        processed_at: chrono::Utc::now().to_rfc3339(),
+                        original_size_bytes: None,
+                        processed_size_bytes: None,
+                    };
+                    let json_response = serde_json::to_string(&error_response).unwrap();
+                    let mut resp = Response::new(Body::from(json_response));
+                    *resp.status_mut() = StatusCode::UNAUTHORIZED;
+                    resp.headers_mut().insert("content-type", "application/json; charset=utf-8".parse().unwrap());
+                    return Ok(resp);
+                }
+            };
+            
+            let response = process_url_api(&api_req.url, api_key, api_key_store.clone()).await;
             let json_response = serde_json::to_string(&response).unwrap_or_else(|_| {
                 r#"{"success":false,"data":null,"error":"JSON serialization error","original_url":null,"processed_at":""}"#.to_string()
             });
@@ -208,7 +258,7 @@ async fn handle_api_post_request(req: Request<Body>, api_key_store: SharedApiKey
             let error_response = ApiResponse {
                 success: false,
                 data: None,
-                error: Some("無効なJSONリクエスト".to_string()),
+                error: Some("無効なJSONリクエストです".to_string()),
                 original_url: None,
                 processed_at: chrono::Utc::now().to_rfc3339(),
                 original_size_bytes: None,
@@ -453,26 +503,24 @@ async fn handle_delete_key_request(req: Request<Body>, api_key_store: SharedApiK
     }
 }
 
-async fn process_url_api(target_url: &str, api_key: Option<&String>, api_key_store: SharedApiKeyStore) -> ApiResponse {
+async fn process_url_api(target_url: &str, api_key: &String, api_key_store: SharedApiKeyStore) -> ApiResponse {
     let normalized_url = normalize_url(target_url);
 
-    // APIキーの検証
-    if let Some(key) = api_key {
-        let store = api_key_store.read().await;
-        if !store.validate_key(key) {
-            drop(store);
-            return ApiResponse {
-                success: false,
-                data: None,
-                error: Some("無効なAPIキーです".to_string()),
-                original_url: Some(normalized_url),
-                processed_at: chrono::Utc::now().to_rfc3339(),
-                original_size_bytes: None,
-                processed_size_bytes: None,
-            };
-        }
+    // APIキーの検証（必須）
+    let store = api_key_store.read().await;
+    if !store.validate_key(api_key) {
         drop(store);
+        return ApiResponse {
+            success: false,
+            data: None,
+            error: Some("無効なAPIキーです".to_string()),
+            original_url: Some(normalized_url),
+            processed_at: chrono::Utc::now().to_rfc3339(),
+            original_size_bytes: None,
+            processed_size_bytes: None,
+        };
     }
+    drop(store);
 
     match get_html(&normalized_url).await {
         Ok((html_body, final_url)) => {
@@ -482,12 +530,10 @@ async fn process_url_api(target_url: &str, api_key: Option<&String>, api_key_sto
             let processed_html = parse_html_to_text(&html_body, &base_url, &final_url);
             let processed_size = processed_html.len() as u64;
 
-            // APIキーがある場合は使用量を記録
-            if let Some(key) = api_key {
-                let mut store = api_key_store.write().await;
-                store.add_usage(key, original_size);
-                drop(store);
-            }
+            // 使用量を記録（APIキーは必須なので必ず記録）
+            let mut store = api_key_store.write().await;
+            store.add_usage(api_key, original_size, processed_size);
+            drop(store);
 
             ApiResponse {
                 success: true,
