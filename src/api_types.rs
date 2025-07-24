@@ -23,18 +23,6 @@ pub struct ApiResponse {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct ApiRequest {
-    pub url: String,
-    pub format: Option<String>, // "html" or "json"
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct CreateKeyRequest {
-    pub admin_key: String,
-    pub key: String,
-}
-
-#[derive(Serialize, Deserialize)]
 pub struct UsageResponse {
     pub success: bool,
     pub key: Option<String>,

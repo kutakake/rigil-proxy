@@ -7,9 +7,9 @@ mod handlers;
 use api_key::{ApiKeyStore, SharedApiKeyStore};
 use web_ui::{get_api_docs_html, get_home_page_html, get_admin_page_html};
 use handlers::{
-    handle_proxy_request, handle_api_get_request, handle_api_post_request,
-    handle_create_key_request, handle_usage_request, handle_list_keys_request,
-    handle_delete_key_request, create_html_response
+    handle_proxy_request, handle_api_get_request, create_html_response,
+    handle_create_key_request, handle_list_keys_request, handle_delete_key_request,
+    handle_statistics_request, handle_admin_login_request
 };
 
 use hyper::service::{make_service_fn, service_fn};
@@ -27,6 +27,17 @@ async fn main() {
 
     // APIキーストアを初期化
     let api_key_store = Arc::new(RwLock::new(ApiKeyStore::load_from_file()));
+
+    // デフォルトAPIキーを追加（もし存在しない場合）
+    {
+        let mut store = api_key_store.write().await;
+        if store.list_keys().is_empty() {
+            store.add_key("default-api-key".to_string());
+            println!("デフォルトAPIキー 'default-api-key' を作成しました");
+        }
+    }
+
+    println!("管理者キー: {}", ApiKeyStore::get_admin_key());
 
     let api_key_store_clone = api_key_store.clone();
     let make_svc = make_service_fn(move |_conn| {
@@ -65,20 +76,20 @@ async fn handle_request(req: Request<Body>, api_key_store: SharedApiKeyStore) ->
         (&Method::GET, "/api/process") => {
             handle_api_get_request(req, api_key_store).await
         }
-        (&Method::POST, "/api/process") => {
-            handle_api_post_request(req, api_key_store).await
-        }
         (&Method::POST, "/api/keys/create") => {
             handle_create_key_request(req, api_key_store).await
-        }
-        (&Method::GET, "/api/keys/usage") => {
-            handle_usage_request(req, api_key_store).await
         }
         (&Method::GET, "/api/keys/list") => {
             handle_list_keys_request(req, api_key_store).await
         }
         (&Method::DELETE, "/api/keys/delete") => {
             handle_delete_key_request(req, api_key_store).await
+        }
+        (&Method::GET, "/api/statistics") => {
+            handle_statistics_request(req, api_key_store).await
+        }
+        (&Method::POST, "/api/admin/login") => {
+            handle_admin_login_request(req, api_key_store).await
         }
         _ => {
             let mut not_found = Response::default();

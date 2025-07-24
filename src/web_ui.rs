@@ -8,13 +8,13 @@ pub fn get_home_page_html() -> &'static str {
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 40px;
+            margin: 40px auto;
+            max-width: 600px;
             background-color: #fafafa;
             color: #333;
+            line-height: 1.6;
         }
         .container {
-            max-width: 800px;
-            margin: 0 auto;
             background: white;
             padding: 30px;
             border-radius: 4px;
@@ -22,458 +22,187 @@ pub fn get_home_page_html() -> &'static str {
         }
         input[type="text"] {
             width: 70%;
-            padding: 8px 12px;
+            padding: 10px;
             font-size: 14px;
             border: 1px solid #ccc;
-            border-radius: 2px;
-            font-family: inherit;
-        }
-        button {
-            padding: 8px 16px;
-            font-size: 14px;
-            margin-left: 10px;
-            background-color: #f8f9fa;
-            color: #333;
-            border: 1px solid #ccc;
-            border-radius: 2px;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        button:hover {
-            background-color: #e9ecef;
-            border-color: #adb5bd;
-        }
-        .api-section {
-            margin-top: 30px;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 2px;
-            border: 1px solid #e9ecef;
-        }
-        .endpoint {
-            margin: 10px 0;
-            font-family: 'Courier New', monospace;
-            background: #fff;
-            padding: 8px;
-            border-radius: 2px;
-            border: 1px solid #e9ecef;
-            font-size: 13px;
-        }
-        h1 {
-            color: #333;
-            border-bottom: 1px solid #e9ecef;
-            padding-bottom: 10px;
-            font-weight: normal;
-        }
-        h2 {
-            color: #555;
-            font-weight: normal;
-            font-size: 18px;
-        }
-        h3 {
-            color: #666;
-            font-weight: normal;
-            font-size: 16px;
-        }
-        a {
-            color: #666;
-            text-decoration: underline;
-        }
-        a:hover {
-            color: #333;
-        }
-        .api-key-section {
-            margin-top: 30px;
-            padding: 20px;
-            background-color: #f0f8ff;
-            border-radius: 2px;
-            border: 1px solid #d1ecf1;
-        }
-        .api-key-form {
-            display: flex;
-            align-items: center;
-            margin: 10px 0;
-        }
-        .api-key-form input {
-            width: 250px;
+            border-radius: 4px;
             margin-right: 10px;
         }
-        .generate-btn {
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
             background-color: #007bff;
             color: white;
-            border: 1px solid #007bff;
-            margin-left: 5px;
-        }
-        .generate-btn:hover {
-            background-color: #0056b3;
-            border-color: #004085;
-        }
-        .result-box {
-            margin: 15px 0;
-            padding: 10px;
-            background-color: #fff;
-            border: 1px solid #e9ecef;
-            border-radius: 2px;
-            min-height: 20px;
-        }
-        .success {
-            color: #155724;
-            background-color: #d4edda;
-            border-color: #c3e6cb;
-        }
-        .error {
-            color: #721c24;
-            background-color: #f8d7da;
-            border-color: #f5c6cb;
-        }
-        .loading {
-            color: #004085;
-            background-color: #cce5ff;
-            border-color: #b8daff;
-        }
-        .progress-container {
-            margin-top: 10px;
-            background-color: #e9ecef;
+            border: none;
             border-radius: 4px;
-            height: 20px;
-            overflow: hidden;
+            cursor: pointer;
         }
-        .progress-bar {
-            height: 100%;
-            background-color: #007bff;
-            transition: width 0.3s ease;
-            width: 0%;
+        button:hover {
+            background-color: #0056b3;
         }
-        .progress-text {
+        .api-key-input {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        .url-input {
+            margin: 20px 0;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .api-info {
+            background: #e7f3ff;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .admin-link {
             text-align: center;
-            line-height: 20px;
-            color: #495057;
-            font-size: 12px;
+            margin: 20px 0;
         }
-        .cancel-btn {
-            background-color: #dc3545;
+        .admin-link a {
+            background-color: #6c757d;
             color: white;
-            border: 1px solid #dc3545;
-            margin-left: 10px;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            display: inline-block;
         }
-        .cancel-btn:hover {
-            background-color: #c82333;
-            border-color: #bd2130;
+        .admin-link a:hover {
+            background-color: #545b62;
+        }
+        .info-box {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #ffeaa7;
+            margin: 20px 0;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Rigil Proxy - HTML軽量化プロキシ</h1>
-
-        <!-- APIキー入力セクション -->
-        <div id="apiKeySection" class="api-key-section">
-            <h2>APIキー設定</h2>
-            <p>⚠️ APIキーが必須です。圧縮機能を使用するにはAPIキーを入力してください：</p>
-            <div class="api-key-form">
-                <input type="text" id="apiKeyInput" placeholder="あなたのAPIキーを入力">
-                <button onclick="saveApiKey()">保存</button>
-                <button onclick="clearApiKey()" class="secondary-btn">クリア</button>
-            </div>
-            <div id="apiKeyStatus" class="result-box" style="display: none;"></div>
+        <h1>Rigil Proxy - HTML軽量化</h1>
+        
+        <div class="api-key-input">
+            <label for="apiKey"><strong>APIキー:</strong></label><br>
+            <input type="text" id="apiKey" placeholder="APIキーを入力" style="width: 80%; margin-top: 5px;">
+            <button onclick="saveApiKey()">保存</button>
         </div>
 
-        <!-- メイン機能セクション -->
-        <div id="mainSection" style="display: none;">
-            <p>URLを入力してHTML軽量化を試してください：</p>
-            <div style="display: flex; align-items: center;">
-                <input type="text" id="urlInput" placeholder="https://example.com" style="flex: 1;">
-                <button id="processBtn" onclick="processUrl()">軽量化</button>
-            </div>
-            <br>
-            <div id="processResult" class="result-box" style="display: none;"></div>
-            <div id="currentApiKey" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
-            <div>
-                <button onclick="clearApiKey()" class="secondary-btn">APIキーをクリア</button>
-            </div>
+        <div class="url-input">
+            <label for="url"><strong>URL:</strong></label><br>
+            <input type="text" id="url" placeholder="https://example.com" style="width: 80%; margin-top: 5px;">
+            <button onclick="processUrl()">軽量化</button>
         </div>
 
-        <div class="api-key-section">
-            <h2>管理機能</h2>
-            <p>APIキーの管理は管理者画面で行えます：</p>
-            <div style="text-align: center; margin: 20px 0;">
-                <a href="/admin" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">🔒 管理者画面へ</a>
-            </div>
-            <p style="font-size: 14px; color: #666;">※ 管理者キーが必要です</p>
+        <div id="result" class="result"></div>
+
+        <div class="admin-link">
+            <a href="/admin">🔧 管理画面</a>
         </div>
 
+        <div class="info-box">
+            <strong>📝 デフォルト情報:</strong><br>
+            • デフォルトAPIキー: <code>default-api-key</code><br>
+            • 管理者キー: <code>admin123</code>
+        </div>
 
-
-        <div class="api-section">
-            <h2>API エンドポイント</h2>
-            <p>プログラムからアクセスする場合は以下のAPIを使用してください：</p>
-
-            <h3>HTML軽量化 (GET)</h3>
-            <div class="endpoint">GET /proxy?url=https://example.com&api_key=your_api_key</div>
-            <p>軽量化されたHTMLを直接返します。<strong>api_keyは必須です。</strong></p>
-
-            <h3>JSON API (GET)</h3>
-            <div class="endpoint">GET /api/process?url=https://example.com&api_key=your_api_key</div>
-            <p>JSON形式で結果を返します。<strong>api_keyは必須です。</strong></p>
-
-            <h3>JSON API (POST)</h3>
-            <div class="endpoint">POST /api/process</div>
-            <p>リクエストボディ: {"url": "https://example.com", "format": "json"}</p>
-            <p><strong>APIキーはX-API-Keyヘッダーで必須です。</strong></p>
-
-            <h3>APIキー管理</h3>
-            <div class="endpoint">POST /api/keys/create</div>
-            <p>新しいAPIキーを作成します。リクエストボディ: {"key": "your_api_key"}</p>
-
-            <div class="endpoint">GET /api/keys/usage?api_key=your_api_key</div>
-            <p>指定したAPIキーの使用量を取得します。</p>
-
-            <div class="endpoint">GET /api/keys/list</div>
-            <p>全てのAPIキーと使用量を一覧表示します。</p>
-
-            <p><a href="/api/docs">詳細なAPIドキュメント</a></p>
+        <div class="api-info">
+            <h3>API使用方法</h3>
+            <p><strong>GET:</strong> <code>/proxy?url=https://example.com&api_key=your_key</code></p>
+            <p><strong>JSON API:</strong> <code>/api/process?url=https://example.com&api_key=your_key</code></p>
         </div>
     </div>
 
     <script>
-        // … なんとなく、LocalStorageって不思議だよね
-        const API_KEY_STORAGE_KEY = 'rigil_proxy_api_key';
-
-        // ページ読み込み時の初期化
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedApiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+        let savedApiKey = localStorage.getItem('rigil_api_key') || '';
+        
+        // ページ読み込み時
+        window.onload = function() {
             if (savedApiKey) {
-                showMainSection(savedApiKey);
-            } else {
-                showApiKeySection();
+                document.getElementById('apiKey').value = savedApiKey;
             }
-        });
-
-        function showApiKeySection() {
-            document.getElementById('apiKeySection').style.display = 'block';
-            document.getElementById('mainSection').style.display = 'none';
-        }
-
-        function showMainSection(apiKey) {
-            document.getElementById('apiKeySection').style.display = 'none';
-            document.getElementById('mainSection').style.display = 'block';
-            document.getElementById('currentApiKey').textContent = `現在のAPIキー: ${apiKey.substring(0, 8)}...`;
-        }
+        };
 
         function saveApiKey() {
-            const apiKey = document.getElementById('apiKeyInput').value.trim();
-            const statusBox = document.getElementById('apiKeyStatus');
-
+            const apiKey = document.getElementById('apiKey').value.trim();
             if (!apiKey) {
-                showResult(statusBox, 'APIキーを入力してください', 'error');
+                showResult('APIキーを入力してください', 'error');
                 return;
             }
-
-            localStorage.setItem(API_KEY_STORAGE_KEY, apiKey);
-            showResult(statusBox, 'APIキーを保存しました', 'success');
-
-            setTimeout(() => {
-                showMainSection(apiKey);
-            }, 1000);
+            localStorage.setItem('rigil_api_key', apiKey);
+            savedApiKey = apiKey;
+            showResult('APIキーを保存しました', 'success');
         }
 
-        function clearApiKey() {
-            if (!confirm('APIキーをクリアしてもよろしいですか？クリア後、再度入力が必要です。')) {
+        async function processUrl() {
+            const url = document.getElementById('url').value.trim();
+            const apiKey = document.getElementById('apiKey').value.trim() || savedApiKey;
+
+            if (!url) {
+                showResult('URLを入力してください', 'error');
                 return;
             }
             
-            localStorage.removeItem(API_KEY_STORAGE_KEY);
-            const statusBox = document.getElementById('apiKeyStatus');
-            showResult(statusBox, 'APIキーをクリアしました', 'info');
-
-            setTimeout(() => {
-                showApiKeySection();
-                document.getElementById('apiKeyInput').value = '';
-            }, 1000);
-        }
-
-        let currentController = null;
-        let progressInterval = null;
-        let isProcessing = false;
-
-        async function processUrl() {
-            const url = document.getElementById('urlInput').value.trim();
-            const resultBox = document.getElementById('processResult');
-            const processBtn = document.getElementById('processBtn');
-            const apiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
-
-            if (!url) {
-                showResult(resultBox, 'URLを入力してください', 'error');
-                return;
-            }
-
             if (!apiKey) {
-                showResult(resultBox, 'APIキーが設定されていません', 'error');
+                showResult('APIキーを入力してください', 'error');
                 return;
             }
 
-            if (isProcessing) {
-                showResult(resultBox, '既に処理中です。完了までお待ちください', 'info');
-                return;
-            }
-
-            // 既存のリクエストをキャンセル
-            if (currentController) {
-                currentController.abort();
-            }
-
-            isProcessing = true;
-            currentController = new AbortController();
-
-            // UIの状態を変更
-            processBtn.disabled = true;
-            processBtn.textContent = '処理中...';
-
-            showLoadingProgress(resultBox, url);
+            showResult('処理中...', 'success');
 
             try {
-                const response = await fetch(`/proxy?url=${encodeURIComponent(url)}&api_key=${encodeURIComponent(apiKey)}`, {
-                    signal: currentController.signal
-                });
-
+                const response = await fetch(`/proxy?url=${encodeURIComponent(url)}&api_key=${encodeURIComponent(apiKey)}`);
+                
                 if (response.ok) {
-                    updateProgress(90, 'HTML処理中...');
                     const html = await response.text();
-
-                    updateProgress(100, '完了！');
-
-                    // 結果を新しいウィンドウで表示
                     const newWindow = window.open();
                     if (newWindow) {
                         newWindow.document.write(html);
                         newWindow.document.close();
-
-                        setTimeout(() => {
-                            showResult(resultBox, '軽量化完了！新しいウィンドウで結果を表示しました', 'success');
-                        }, 500);
+                        showResult('軽量化完了！新しいウィンドウで表示しました', 'success');
                     } else {
-                        showResult(resultBox, '軽量化完了！ポップアップがブロックされました', 'success');
+                        showResult('軽量化完了！ポップアップがブロックされました', 'success');
                     }
                 } else {
                     const errorText = await response.text();
-                    let errorMessage = `エラー: ${response.status}`;
-
-                    if (response.status === 504) {
-                        errorMessage += ' - タイムアウトしました。サーバーの応答に時間がかかりすぎています。';
-                    } else if (response.status === 404) {
-                        errorMessage += ' - URLが見つかりません。正しいURLを入力してください。';
-                    } else if (response.status === 403) {
-                        errorMessage += ' - アクセスが拒否されました。';
-                    } else if (response.status === 401) {
-                        errorMessage += ' - 認証に失敗しました。APIキーを確認してください。';
-                    } else if (response.status >= 500) {
-                        errorMessage += ' - サーバーエラーが発生しました。しばらく待ってから再試行してください。';
-                    } else {
-                        errorMessage += ` - ${errorText}`;
-                    }
-
-                    showResult(resultBox, errorMessage, 'error');
+                    showResult(`エラー: ${response.status} - ${errorText}`, 'error');
                 }
             } catch (error) {
-                if (error.name === 'AbortError') {
-                    showResult(resultBox, '処理がキャンセルされました', 'info');
-                } else if (error.name === 'TimeoutError') {
-                    showResult(resultBox, '処理がタイムアウトしました。ネットワーク接続を確認してください。', 'error');
-                } else if (error.message.includes('fetch')) {
-                    showResult(resultBox, 'ネットワークエラーが発生しました。インターネット接続を確認してください。', 'error');
-                } else {
-                    showResult(resultBox, `処理中にエラーが発生しました: ${error.message}`, 'error');
-                }
-            } finally {
-                currentController = null;
-                isProcessing = false;
-                clearInterval(progressInterval);
-
-                // UIの状態をリセット
-                processBtn.disabled = false;
-                processBtn.textContent = '軽量化';
+                showResult(`エラー: ${error.message}`, 'error');
             }
         }
 
-        function showLoadingProgress(element, url) {
-            element.style.display = 'block';
-            element.className = 'result-box loading';
-
-            const progressHTML = `
-                <div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span id="progressText">HTMLを取得中...</span>
-                        <button onclick="cancelProcessing()" class="cancel-btn">キャンセル</button>
-                    </div>
-                    <div class="progress-container">
-                        <div id="progressBar" class="progress-bar"></div>
-                        <div class="progress-text" id="progressPercent">0%</div>
-                    </div>
-                    <div style="margin-top: 5px; font-size: 12px; color: #666;">
-                        対象URL: ${url}
-                    </div>
-                </div>
-            `;
-
-            element.innerHTML = progressHTML;
-
-            // 進捗のアニメーション
-            let progress = 0;
-            const stages = [
-                { progress: 20, text: 'サーバーに接続中...' },
-                { progress: 40, text: 'HTMLを取得中...' },
-                { progress: 60, text: 'HTMLを解析中...' },
-                { progress: 80, text: 'リンクを処理中...' }
-            ];
-
-            let stageIndex = 0;
-            progressInterval = setInterval(() => {
-                if (stageIndex < stages.length) {
-                    const stage = stages[stageIndex];
-                    if (progress < stage.progress) {
-                        progress += 2;
-                        updateProgress(progress, stage.text);
-                    } else {
-                        stageIndex++;
-                    }
-                }
-            }, 200);
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            result.textContent = message;
+            result.className = `result ${type}`;
+            result.style.display = 'block';
         }
 
-        function updateProgress(percent, text) {
-            const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
-            const progressPercent = document.getElementById('progressPercent');
-
-            if (progressBar) {
-                progressBar.style.width = percent + '%';
-            }
-            if (progressText) {
-                progressText.textContent = text;
-            }
-            if (progressPercent) {
-                progressPercent.textContent = percent + '%';
-            }
-        }
-
-        function cancelProcessing() {
-            if (currentController) {
-                currentController.abort();
-            }
-        }
-
-        function showResult(element, message, type) {
-            element.style.display = 'block';
-            element.textContent = message;
-            element.className = `result-box ${type}`;
-        }
-
-        // Enterキーでの操作をサポート
-        document.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                if (document.getElementById('apiKeySection').style.display !== 'none') {
+        // Enterキーでの処理
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                if (document.activeElement.id === 'apiKey') {
                     saveApiKey();
-                } else if (document.getElementById('mainSection').style.display !== 'none' && !isProcessing) {
+                } else if (document.activeElement.id === 'url') {
                     processUrl();
                 }
             }
@@ -481,277 +210,67 @@ pub fn get_home_page_html() -> &'static str {
     </script>
 </body>
 </html>
-            "#
+    "#
 }
 
+// API ドキュメント（簡素化版）
 pub fn get_api_docs_html() -> &'static str {
     r#"
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Rigil Proxy API Documentation</title>
+    <title>Rigil Proxy API</title>
     <meta charset="UTF-8">
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 40px;
-            line-height: 1.6;
-            color: #333;
-            background-color: #fafafa;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .endpoint {
-            background: #f8f9fa;
-            padding: 15px;
-            margin: 15px 0;
-            border-left: 3px solid #ccc;
-            border-radius: 2px;
-        }
-        .method {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 2px;
-            font-weight: bold;
-            color: white;
-            font-size: 12px;
-        }
-        .get { background-color: #6c757d; }
-        .post { background-color: #495057; }
-        code {
-            background: #f8f9fa;
-            padding: 2px 4px;
-            border-radius: 2px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-        }
-        pre {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 2px;
-            overflow-x: auto;
-            border: 1px solid #e9ecef;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-        }
-        h1 {
-            color: #333;
-            border-bottom: 1px solid #e9ecef;
-            padding-bottom: 10px;
-            font-weight: normal;
-        }
-        h2 {
-            color: #555;
-            margin-top: 30px;
-            font-weight: normal;
-        }
-        h3 {
-            color: #666;
-            font-weight: normal;
-        }
-        a {
-            color: #666;
-            text-decoration: underline;
-        }
-        a:hover {
-            color: #333;
-        }
+        body { font-family: 'Segoe UI', sans-serif; margin: 40px auto; max-width: 800px; line-height: 1.6; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        h1 { border-bottom: 2px solid #007bff; padding-bottom: 10px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Rigil Proxy API Documentation</h1>
+    <h1>Rigil Proxy API</h1>
+    
+    <h2>エンドポイント</h2>
+    
+    <h3>HTML軽量化</h3>
+    <p><strong>GET</strong> <code>/proxy?url=https://example.com&api_key=your_key</code></p>
+    <p>軽量化されたHTMLを返します。</p>
 
-        <h2>概要</h2>
-        <p>Rigil ProxyはHTML軽量化機能を提供するRESTful APIです。Rigil-Browserと同じアルゴリズムを使用してHTMLを軽量化し、不要なJavaScript、CSS、タグを除去します。</p>
-
-        <h2>エンドポイント</h2>
-
-        <div class="endpoint">
-            <h3><span class="method get">GET</span> /proxy</h3>
-            <p><strong>説明:</strong> 指定されたURLのHTMLを軽量化して返します。</p>
-            <p><strong>パラメータ:</strong></p>
-            <ul>
-                <li><code>url</code> (必須): 軽量化したいWebページのURL</li>
-                <li><code>api_key</code> (必須): APIキー</li>
-            </ul>
-            <p><strong>レスポンス:</strong> 軽量化されたHTML (Content-Type: text/html)</p>
-            <p><strong>例:</strong></p>
-            <pre>GET /proxy?url=https://example.com&api_key=your_api_key</pre>
-        </div>
-
-        <div class="endpoint">
-            <h3><span class="method get">GET</span> /api/process</h3>
-            <p><strong>説明:</strong> 指定されたURLのHTMLを軽量化してJSON形式で返します。</p>
-            <p><strong>パラメータ:</strong></p>
-            <ul>
-                <li><code>url</code> (必須): 軽量化したいWebページのURL</li>
-                <li><code>api_key</code> (必須): APIキー</li>
-            </ul>
-            <p><strong>レスポンス:</strong> JSON形式の結果</p>
-            <p><strong>例:</strong></p>
-            <pre>GET /api/process?url=https://example.com&api_key=your_api_key
-
-レスポンス:
-{
+    <h3>JSON API</h3>
+    <p><strong>GET</strong> <code>/api/process?url=https://example.com&api_key=your_key</code></p>
+    <p>JSON形式で結果を返します：</p>
+    <pre>{
   "success": true,
   "data": "&lt;html&gt;...&lt;/html&gt;",
   "error": null,
-  "original_url": "https://example.com",
-  "processed_at": "2024-01-01T12:00:00Z",
-  "original_size_bytes": 5120,
-  "processed_size_bytes": 1024
-}</pre>
-        </div>
-
-        <div class="endpoint">
-            <h3><span class="method post">POST</span> /api/process</h3>
-            <p><strong>説明:</strong> JSON形式のリクエストでHTMLを軽量化します。</p>
-            <p><strong>Content-Type:</strong> application/json</p>
-            <p><strong>ヘッダー:</strong></p>
-            <ul>
-                <li><code>X-API-Key</code> (必須): APIキー</li>
-            </ul>
-            <p><strong>リクエストボディ:</strong></p>
-            <pre>{
-  "url": "https://example.com",
-  "format": "json"  // オプション: "html" または "json"
-}</pre>
-            <p><strong>レスポンス:</strong> JSON形式の結果</p>
-            <p><strong>例:</strong></p>
-            <pre>POST /api/process
-Content-Type: application/json
-X-API-Key: your_api_key
-
-{
-  "url": "https://example.com"
-}
-
-レスポンス:
-{
-  "success": true,
-  "data": "&lt;html&gt;...&lt;/html&gt;",
-  "error": null,
-  "original_url": "https://example.com",
-  "processed_at": "2024-01-01T12:00:00Z",
-  "original_size_bytes": 5120,
-  "processed_size_bytes": 1024
-}</pre>
-        </div>
-
-        <div class="endpoint">
-            <h3><span class="method post">POST</span> /api/keys/create</h3>
-            <p><strong>説明:</strong> 新しいAPIキーを作成します。</p>
-            <p><strong>Content-Type:</strong> application/json</p>
-            <p><strong>リクエストボディ:</strong></p>
-            <pre>{"key": "your_api_key"}</pre>
-            <p><strong>例:</strong></p>
-            <pre>POST /api/keys/create
-Content-Type: application/json
-
-{"key": "my-unique-api-key"}
-
-レスポンス:
-{
-  "success": true,
-  "key": "my-unique-api-key",
-  "total_bytes_processed": 0,
-  "keys": null,
-  "error": null
-}</pre>
-        </div>
-
-        <div class="endpoint">
-            <h3><span class="method get">GET</span> /api/keys/usage</h3>
-            <p><strong>説明:</strong> 指定したAPIキーの使用量を取得します。</p>
-            <p><strong>パラメータ:</strong></p>
-            <ul>
-                <li><code>api_key</code> (必須): 使用量を確認したいAPIキー</li>
-            </ul>
-            <p><strong>例:</strong></p>
-            <pre>GET /api/keys/usage?api_key=my-unique-api-key
-
-レスポンス:
-{
-  "success": true,
-  "key": "my-unique-api-key",
-  "total_bytes_processed": 102400,
-  "keys": null,
-  "error": null
-}</pre>
-        </div>
-
-        <div class="endpoint">
-            <h3><span class="method get">GET</span> /api/keys/list</h3>
-            <p><strong>説明:</strong> 全てのAPIキーとその使用量を一覧表示します。</p>
-            <p><strong>例:</strong></p>
-            <pre>GET /api/keys/list
-
-レスポンス:
-{
-  "success": true,
-  "key": null,
-  "total_bytes_processed": null,
-  "keys": [
-    {
-      "key": "my-unique-api-key",
-      "total_bytes_processed": 102400,
-      "created_at": "2024-01-01T12:00:00Z",
-      "last_used": "2024-01-01T14:30:00Z"
-    }
-  ],
-  "error": null
-}</pre>
-        </div>
-
-        <h2>エラーレスポンス</h2>
-        <p>エラーが発生した場合、以下の形式でJSONが返されます：</p>
-        <pre>{
-  "success": false,
-  "data": null,
-  "error": "エラーメッセージ",
   "original_url": "https://example.com",
   "processed_at": "2024-01-01T12:00:00Z"
 }</pre>
 
-        <h2>軽量化処理の詳細</h2>
-        <ul>
-            <li><strong>除去されるタグ:</strong> &lt;script&gt;、&lt;style&gt;、その他の不要なタグ</li>
-            <li><strong>保持されるタグ:</strong> title、br、h1-h6、b、i、ul、li、ol</li>
-            <li><strong>リンク変換:</strong> &lt;a&gt;タグはプロキシ経由のリンクに変換</li>
-            <li><strong>URL正規化:</strong> 相対URLは絶対URLに変換</li>
-        </ul>
-
-        <p><a href="/">← ホームに戻る</a></p>
-    </div>
+    <p><a href="/">← ホームに戻る</a></p>
 </body>
 </html>
-            "#
+    "#
 }
 
+// ログイン機能付き管理画面
 pub fn get_admin_page_html() -> &'static str {
     r#"
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Rigil Proxy - 管理者画面</title>
+    <title>Rigil Proxy - 管理画面</title>
     <meta charset="UTF-8">
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 40px;
+            margin: 40px auto;
+            max-width: 1000px;
             background-color: #fafafa;
             color: #333;
         }
         .container {
-            max-width: 900px;
-            margin: 0 auto;
             background: white;
             padding: 30px;
             border-radius: 4px;
@@ -761,8 +280,10 @@ pub fn get_admin_page_html() -> &'static str {
             text-align: center;
             padding: 40px;
             background-color: #f8f9fa;
-            border-radius: 4px;
+            border-radius: 8px;
             border: 1px solid #e9ecef;
+            max-width: 400px;
+            margin: 0 auto;
         }
         .admin-section {
             display: none;
@@ -773,47 +294,39 @@ pub fn get_admin_page_html() -> &'static str {
             font-size: 14px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            font-family: inherit;
             margin: 10px;
         }
         button {
             padding: 12px 24px;
             font-size: 14px;
-            margin: 10px;
             background-color: #007bff;
             color: white;
-            border: 1px solid #007bff;
+            border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-family: inherit;
+            margin: 5px;
         }
         button:hover {
             background-color: #0056b3;
-            border-color: #004085;
         }
         .danger-btn {
             background-color: #dc3545;
-            border-color: #dc3545;
         }
         .danger-btn:hover {
             background-color: #c82333;
-            border-color: #bd2130;
         }
         .secondary-btn {
             background-color: #6c757d;
-            border-color: #6c757d;
         }
         .secondary-btn:hover {
             background-color: #545b62;
-            border-color: #4e555b;
         }
-        #urlInput {
-            margin-right: 10px;
+        .logout-btn {
+            background-color: #ffc107;
+            color: #212529;
         }
-        #processResult {
-            margin-top: 15px;
-            max-height: 400px;
-            overflow-y: auto;
+        .logout-btn:hover {
+            background-color: #e0a800;
         }
         .api-key-table {
             width: 100%;
@@ -822,22 +335,21 @@ pub fn get_admin_page_html() -> &'static str {
             font-size: 14px;
         }
         .api-key-table th, .api-key-table td {
-            padding: 8px 12px;
+            padding: 12px;
             text-align: left;
             border-bottom: 1px solid #ddd;
         }
         .api-key-table th {
             background-color: #f8f9fa;
-            font-weight: normal;
         }
         .api-key-table tr:hover {
             background-color: #f5f5f5;
         }
-        .result-box {
+        .result {
             margin: 15px 0;
             padding: 15px;
             border-radius: 4px;
-            min-height: 20px;
+            display: none;
         }
         .success {
             color: #155724;
@@ -849,22 +361,10 @@ pub fn get_admin_page_html() -> &'static str {
             background-color: #f8d7da;
             border: 1px solid #f5c6cb;
         }
-        .info {
-            color: #0c5460;
-            background-color: #d1ecf1;
-            border: 1px solid #b8daff;
-        }
         h1 {
             color: #333;
             border-bottom: 2px solid #007bff;
             padding-bottom: 10px;
-            font-weight: normal;
-        }
-        h2 {
-            color: #555;
-            font-weight: normal;
-            font-size: 18px;
-            margin-top: 30px;
         }
         .form-group {
             margin: 20px 0;
@@ -874,81 +374,164 @@ pub fn get_admin_page_html() -> &'static str {
             margin-bottom: 5px;
             font-weight: 500;
         }
-        .actions {
+        .stats-container {
             display: flex;
-            gap: 10px;
+            gap: 20px;
             margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            min-width: 180px;
+            text-align: center;
+            flex: 1;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        .compression-ratio {
+            color: #28a745;
+        }
+        .total-bytes {
+            color: #dc3545;
+        }
+        .processed-bytes {
+            color: #007bff;
+        }
+        .total-keys {
+            color: #6f42c1;
+        }
+        .total-compressions {
+            color: #fd7e14;
+        }
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .info-box {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #bee5eb;
+            margin: 20px 0;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔒 Rigil Proxy 管理者画面</h1>
-
         <!-- ログイン画面 -->
         <div id="loginSection" class="login-section">
-            <h2>管理者認証</h2>
+            <h1>🔒 管理者ログイン</h1>
             <p>管理者キーを入力してください</p>
             <div>
                 <input type="password" id="adminKeyInput" placeholder="管理者キー" onkeypress="if(event.key==='Enter') login()">
                 <br>
                 <button onclick="login()">ログイン</button>
             </div>
-            <div id="loginResult" class="result-box" style="display: none;"></div>
+            <div id="loginResult" class="result"></div>
+            
+            <div style="margin-top: 30px;">
+                <a href="/" style="color: #6c757d; text-decoration: none;">← ホームに戻る</a>
+            </div>
         </div>
 
         <!-- 管理画面 -->
         <div id="adminSection" class="admin-section">
-            <div class="actions">
-                <button onclick="loadApiKeys()" class="secondary-btn">🔄 更新</button>
-                <button onclick="logout()" class="danger-btn">ログアウト</button>
+            <div class="header-actions">
+                <h1>🔧 Rigil Proxy 管理画面</h1>
+                <div>
+                    <button onclick="loadStatistics()" class="secondary-btn">🔄 データ更新</button>
+                    <button onclick="logout()" class="logout-btn">ログアウト</button>
+                </div>
             </div>
 
             <h2>📊 圧縮統計サマリー</h2>
-            <div id="statisticsContainer" style="display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap;">
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border: 1px solid #e9ecef; min-width: 200px; text-align: center;">
-                    <div style="font-size: 24px; font-weight: bold; color: #007bff;" id="totalKeys">-</div>
-                    <div style="color: #666; font-size: 14px;">総APIキー数</div>
+            <div id="statisticsContainer" class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-value total-keys" id="totalKeys">-</div>
+                    <div class="stat-label">総APIキー数</div>
                 </div>
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border: 1px solid #e9ecef; min-width: 200px; text-align: center;">
-                    <div style="font-size: 24px; font-weight: bold; color: #dc3545;" id="totalOriginalSize">-</div>
-                    <div style="color: #666; font-size: 14px;">総原データ容量</div>
+                <div class="stat-card">
+                    <div class="stat-value total-bytes" id="totalOriginalSize">-</div>
+                    <div class="stat-label">総原データ容量</div>
                 </div>
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border: 1px solid #e9ecef; min-width: 200px; text-align: center;">
-                    <div style="font-size: 24px; font-weight: bold; color: #28a745;" id="totalProcessedSize">-</div>
-                    <div style="color: #666; font-size: 14px;">総圧縮後容量</div>
+                <div class="stat-card">
+                    <div class="stat-value processed-bytes" id="totalProcessedSize">-</div>
+                    <div class="stat-label">総圧縮後容量</div>
                 </div>
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border: 1px solid #e9ecef; min-width: 200px; text-align: center;">
-                    <div style="font-size: 24px; font-weight: bold; color: #007bff;" id="overallCompressionRatio">-</div>
-                    <div style="color: #666; font-size: 14px;">全体圧縮効率</div>
+                <div class="stat-card">
+                    <div class="stat-value compression-ratio" id="compressionRatio">-</div>
+                    <div class="stat-label">圧縮効率</div>
                 </div>
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border: 1px solid #e9ecef; min-width: 200px; text-align: center;">
-                    <div style="font-size: 24px; font-weight: bold; color: #ffc107;" id="totalCompressions">-</div>
-                    <div style="color: #666; font-size: 14px;">総圧縮回数</div>
+                <div class="stat-card">
+                    <div class="stat-value total-compressions" id="totalCompressions">-</div>
+                    <div class="stat-label">総圧縮回数</div>
                 </div>
             </div>
 
             <h2>📋 APIキー一覧</h2>
-            <div id="apiKeysResult" class="result-box" style="display: none;"></div>
+            <button onclick="loadApiKeys()">🔄 更新</button>
+            <div id="apiKeysResult" class="result"></div>
             <div id="apiKeysContainer">
                 <p>読み込み中...</p>
             </div>
 
-            <h2>➕ 新しいAPIキーを作成</h2>
+            <h2>➕ 新しいAPIキーを追加</h2>
             <div class="form-group">
                 <label for="newApiKey">APIキー名:</label>
                 <input type="text" id="newApiKey" placeholder="例: user-123-key">
                 <button onclick="generateRandomKey()">ランダム生成</button>
-                <button onclick="createApiKey()">作成</button>
+                <button onclick="createApiKey()">追加</button>
             </div>
-            <div id="createResult" class="result-box" style="display: none;"></div>
+            <div id="createResult" class="result"></div>
+
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="/" style="color: #6c757d; text-decoration: none;">← ホームに戻る</a>
+            </div>
         </div>
     </div>
 
     <script>
         let currentAdminKey = '';
 
-        function login() {
+        // ページ読み込み時
+        window.onload = function() {
+            // セッションから管理者キーを復元
+            const savedAdminKey = sessionStorage.getItem('rigil_admin_key');
+            if (savedAdminKey) {
+                currentAdminKey = savedAdminKey;
+                showAdminSection();
+            } else {
+                showLoginSection();
+            }
+        };
+
+        function showLoginSection() {
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('adminSection').style.display = 'none';
+        }
+
+        function showAdminSection() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('adminSection').style.display = 'block';
+            loadApiKeys();
+            loadStatistics();
+        }
+
+        async function login() {
             const adminKey = document.getElementById('adminKeyInput').value.trim();
             const resultBox = document.getElementById('loginResult');
 
@@ -957,79 +540,83 @@ pub fn get_admin_page_html() -> &'static str {
                 return;
             }
 
-            currentAdminKey = adminKey;
-
-            // 管理者キーを使ってAPIキー一覧を取得してみる（認証テスト）
-            testAdminAccess();
-        }
-
-        async function testAdminAccess() {
-            const resultBox = document.getElementById('loginResult');
-
             try {
-                const response = await fetch(`/api/keys/list?admin_key=${encodeURIComponent(currentAdminKey)}`);
+                const response = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        admin_key: adminKey
+                    })
+                });
+
                 const data = await response.json();
 
                 if (data.success) {
-                    // 認証成功
-                    document.getElementById('loginSection').style.display = 'none';
-                    document.getElementById('adminSection').style.display = 'block';
-                    loadApiKeys();
+                    currentAdminKey = adminKey;
+                    sessionStorage.setItem('rigil_admin_key', adminKey);
+                    showResult(resultBox, 'ログイン成功！', 'success');
+                    
+                    setTimeout(() => {
+                        showAdminSection();
+                    }, 1000);
                 } else {
-                    showResult(resultBox, `認証失敗: ${data.error}`, 'error');
-                    currentAdminKey = '';
+                    showResult(resultBox, `ログイン失敗: ${data.error}`, 'error');
                 }
             } catch (error) {
                 showResult(resultBox, `ネットワークエラー: ${error.message}`, 'error');
-                currentAdminKey = '';
             }
         }
 
         function logout() {
             currentAdminKey = '';
-            document.getElementById('loginSection').style.display = 'block';
-            document.getElementById('adminSection').style.display = 'none';
+            sessionStorage.removeItem('rigil_admin_key');
             document.getElementById('adminKeyInput').value = '';
-            document.getElementById('loginResult').style.display = 'none';
+            showLoginSection();
         }
 
-        async function loadApiKeys() {
-            const container = document.getElementById('apiKeysContainer');
-            const resultBox = document.getElementById('apiKeysResult');
-
+        async function loadStatistics() {
             if (!currentAdminKey) {
                 logout();
                 return;
             }
 
             try {
+                const response = await fetch(`/api/statistics?admin_key=${encodeURIComponent(currentAdminKey)}`);
+                const data = await response.json();
+
+                if (data.success && data.statistics) {
+                    const stats = data.statistics;
+                    document.getElementById('totalKeys').textContent = stats.total_keys.toLocaleString();
+                    document.getElementById('totalOriginalSize').textContent = formatBytes(stats.total_original_bytes);
+                    document.getElementById('totalProcessedSize').textContent = formatBytes(stats.total_processed_bytes);
+                    document.getElementById('compressionRatio').textContent = stats.compression_ratio + '%';
+                    document.getElementById('totalCompressions').textContent = stats.total_compressions.toLocaleString();
+                } else if (data.error && data.error.includes('管理者権限')) {
+                    logout();
+                }
+            } catch (error) {
+                console.error('統計データの読み込みエラー:', error);
+            }
+        }
+
+        async function loadApiKeys() {
+            if (!currentAdminKey) {
+                logout();
+                return;
+            }
+
+            const container = document.getElementById('apiKeysContainer');
+            const resultBox = document.getElementById('apiKeysResult');
+
+            try {
                 const response = await fetch(`/api/keys/list?admin_key=${encodeURIComponent(currentAdminKey)}`);
                 const data = await response.json();
 
                 if (data.success && data.keys) {
-                    // 統計情報を計算
-                    let totalOriginalBytes = 0;
-                    let totalProcessedBytes = 0;
-                    let totalCompressions = 0;
-                    
-                    data.keys.forEach(key => {
-                        totalOriginalBytes += key.total_original_bytes || key.total_bytes_processed || 0;
-                        totalProcessedBytes += key.total_processed_bytes || 0;
-                        totalCompressions += key.compression_count || 0;
-                    });
-                    
-                    const overallCompressionRatio = totalOriginalBytes > 0 ? 
-                        ((totalOriginalBytes - totalProcessedBytes) / totalOriginalBytes * 100) : 0;
-                    
-                    // 統計情報を表示
-                    document.getElementById('totalKeys').textContent = data.keys.length.toLocaleString();
-                    document.getElementById('totalOriginalSize').textContent = formatBytes(totalOriginalBytes);
-                    document.getElementById('totalProcessedSize').textContent = formatBytes(totalProcessedBytes);
-                    document.getElementById('overallCompressionRatio').textContent = overallCompressionRatio.toFixed(1) + '%';
-                    document.getElementById('totalCompressions').textContent = totalCompressions.toLocaleString();
-                    
                     if (data.keys.length === 0) {
-                        container.innerHTML = '<p class="info">APIキーが登録されていません</p>';
+                        container.innerHTML = '<p style="color: #666;">APIキーが登録されていません</p>';
                     } else {
                         container.innerHTML = `
                             <table class="api-key-table">
@@ -1047,24 +634,24 @@ pub fn get_admin_page_html() -> &'static str {
                                 </thead>
                                 <tbody>
                                     ${data.keys.map(key => {
-                                        const originalBytes = key.total_original_bytes || key.total_bytes_processed;
-                                        const processedBytes = key.total_processed_bytes || 0;
-                                        const compressionRatio = originalBytes > 0 ? ((originalBytes - processedBytes) / originalBytes * 100) : 0;
-                                        const compressionCount = key.compression_count || 0;
+                                        const originalBytes = key.total_original_bytes;
+                                        const processedBytes = key.total_processed_bytes;
+                                        const compressionRatio = originalBytes > 0 ? 
+                                            ((originalBytes - processedBytes) / originalBytes * 100) : 0;
                                         
                                         return `
                                             <tr>
                                                 <td><code>${key.key}</code></td>
                                                 <td style="font-family: monospace;">${formatBytes(originalBytes)}</td>
                                                 <td style="font-family: monospace;">${formatBytes(processedBytes)}</td>
-                                                <td style="color: ${compressionRatio > 50 ? '#28a745' : compressionRatio > 20 ? '#ffc107' : '#dc3545'}; font-weight: bold;">
+                                                <td style="color: ${compressionRatio > 50 ? '#28a745' : compressionRatio > 20 ? '#fd7e14' : '#dc3545'}; font-weight: bold;">
                                                     ${compressionRatio.toFixed(1)}%
                                                 </td>
-                                                <td>${compressionCount.toLocaleString()} 回</td>
+                                                <td>${key.compression_count.toLocaleString()} 回</td>
                                                 <td>${new Date(key.created_at).toLocaleString('ja-JP')}</td>
                                                 <td>${key.last_used ? new Date(key.last_used).toLocaleString('ja-JP') : '未使用'}</td>
                                                 <td>
-                                                    <button onclick="deleteApiKey('${key.key}')" class="danger-btn" style="padding: 6px 12px; margin: 0;">削除</button>
+                                                    <button onclick="deleteApiKey('${key.key}')" class="danger-btn">削除</button>
                                                 </td>
                                             </tr>
                                         `;
@@ -1074,6 +661,8 @@ pub fn get_admin_page_html() -> &'static str {
                         `;
                     }
                     hideResult(resultBox);
+                } else if (data.error && data.error.includes('管理者権限')) {
+                    logout();
                 } else {
                     showResult(resultBox, `エラー: ${data.error}`, 'error');
                     container.innerHTML = '';
@@ -1087,7 +676,7 @@ pub fn get_admin_page_html() -> &'static str {
         function generateRandomKey() {
             const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
             let result = 'key-';
-            for (let i = 0; i < 32; i++) {
+            for (let i = 0; i < 16; i++) {
                 result += chars.charAt(Math.floor(Math.random() * chars.length));
             }
             document.getElementById('newApiKey').value = result;
@@ -1103,11 +692,6 @@ pub fn get_admin_page_html() -> &'static str {
                 return;
             }
 
-            if (!currentAdminKey) {
-                logout();
-                return;
-            }
-
             try {
                 const response = await fetch('/api/keys/create', {
                     method: 'POST',
@@ -1115,7 +699,6 @@ pub fn get_admin_page_html() -> &'static str {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        admin_key: currentAdminKey,
                         key: apiKey
                     })
                 });
@@ -1123,9 +706,10 @@ pub fn get_admin_page_html() -> &'static str {
                 const data = await response.json();
 
                 if (data.success) {
-                    showResult(resultBox, `APIキー "${apiKey}" を作成しました！`, 'success');
+                    showResult(resultBox, `APIキー "${apiKey}" を追加しました！`, 'success');
                     newKeyInput.value = '';
                     loadApiKeys(); // 一覧を更新
+                    loadStatistics(); // 統計を更新
                 } else {
                     showResult(resultBox, `エラー: ${data.error}`, 'error');
                 }
@@ -1147,7 +731,7 @@ pub fn get_admin_page_html() -> &'static str {
             const resultBox = document.getElementById('apiKeysResult');
 
             try {
-                const response = await fetch(`/api/keys/delete?admin_key=${encodeURIComponent(currentAdminKey)}&key=${encodeURIComponent(apiKey)}`, {
+                const response = await fetch(`/api/keys/delete?key=${encodeURIComponent(apiKey)}&admin_key=${encodeURIComponent(currentAdminKey)}`, {
                     method: 'DELETE'
                 });
 
@@ -1156,6 +740,9 @@ pub fn get_admin_page_html() -> &'static str {
                 if (data.success) {
                     showResult(resultBox, `APIキー "${apiKey}" を削除しました`, 'success');
                     loadApiKeys(); // 一覧を更新
+                    loadStatistics(); // 統計を更新
+                } else if (data.error && data.error.includes('管理者権限')) {
+                    logout();
                 } else {
                     showResult(resultBox, `削除エラー: ${data.error}`, 'error');
                 }
@@ -1166,7 +753,7 @@ pub fn get_admin_page_html() -> &'static str {
 
         function showResult(element, message, type) {
             element.textContent = message;
-            element.className = `result-box ${type}`;
+            element.className = `result ${type}`;
             element.style.display = 'block';
         }
 
@@ -1181,11 +768,6 @@ pub fn get_admin_page_html() -> &'static str {
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
         }
-
-        // ページ読み込み時の処理
-        document.addEventListener('DOMContentLoaded', function() {
-            // 何もしない（ログイン画面から開始）
-        });
     </script>
 </body>
 </html>
