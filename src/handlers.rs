@@ -19,6 +19,7 @@ pub fn create_json_response(body: String, status: StatusCode) -> Response<Body> 
     let mut response = Response::new(Body::from(body));
     *response.status_mut() = status;
     response.headers_mut().insert("content-type", "application/json; charset=utf-8".parse().unwrap());
+    response.headers_mut().insert("Access-Control-Allow-Origin", "*".parse().unwrap());
     response
 }
 
@@ -152,7 +153,7 @@ pub async fn handle_create_key_request(req: Request<Body>, api_key_store: Shared
     };
 
     let request_data: Result<serde_json::Value, _> = serde_json::from_str(&body_str);
-    
+
     match request_data {
         Ok(data) => {
             if let Some(key) = data.get("key").and_then(|k| k.as_str()) {
@@ -229,7 +230,7 @@ pub async fn handle_delete_key_request(req: Request<Body>, api_key_store: Shared
     if let Some(key_to_delete) = params.get("key") {
         let admin_key = params.get("admin_key").unwrap();
         let mut store = api_key_store.write().await;
-        
+
         match store.remove_key(admin_key, key_to_delete) {
             Ok(()) => {
                 let response = SimpleResponse {
@@ -286,12 +287,12 @@ pub async fn handle_admin_login_request(req: Request<Body>, api_key_store: Share
     };
 
     let request_data: Result<serde_json::Value, _> = serde_json::from_str(&body_str);
-    
+
     match request_data {
         Ok(data) => {
             if let Some(admin_key) = data.get("admin_key").and_then(|k| k.as_str()) {
                 let store = api_key_store.read().await;
-                
+
                 if store.validate_admin_key(admin_key) {
                     let response = serde_json::json!({
                         "success": true,
@@ -386,4 +387,4 @@ fn create_api_error_response(error_msg: &str, original_url: Option<&str>) -> Api
         original_size_bytes: None,
         processed_size_bytes: None,
     }
-} 
+}
