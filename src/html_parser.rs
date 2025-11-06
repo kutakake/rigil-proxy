@@ -158,7 +158,7 @@ fn process_link_tag(tag: &str, contents: &[char], i: &mut usize, base_url: &str,
     // プロキシ経由でリンクを処理するように修正
     format!(
         "<a href=\"/proxy?url={}\" title=\"{}\">{}</a>",
-        urlencoding::encode(&resolved_href), 
+        urlencoding::encode(&resolved_href),
         htmlescape::encode_minimal(&resolved_href),
         htmlescape::encode_minimal(&display_text)
     )
@@ -174,12 +174,12 @@ function addApiKeyToProxyLinks(){
     // URLパラメータからAPIキーを取得
     const urlParams=new URLSearchParams(window.location.search);
     let apiKey=urlParams.get('api_key');
-    
+
     // URLパラメータにない場合はLocalStorageから取得
     if(!apiKey){
-        apiKey=localStorage.getItem('rigil_proxy_api_key');
+        apiKey=localStorage.getItem('rigil_api_key');
     }
-    
+
     if(apiKey){
         const proxyLinks=document.querySelectorAll('a[href^="/proxy?url="]');
         proxyLinks.forEach(link=>{
@@ -191,8 +191,9 @@ function addApiKeyToProxyLinks(){
     }
 }
 document.addEventListener('DOMContentLoaded',addApiKeyToProxyLinks);
+//addApiKeyToProxyLinks();
 </script>"#;
-    
+
     formatted_text.push_str("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;line-height:1.6;margin:20px;color:#333;background-color:#fafafa;max-width:100%;overflow-x:auto;} a{color:#666;text-decoration:underline;margin-right:8px;word-break:break-word;max-width:100%;display:inline-block;} a:hover{color:#333;}</style>");
     formatted_text.push_str(javascript_code);
     formatted_text.push_str("</head><body>");
@@ -254,7 +255,7 @@ pub async fn get_html(url: &str) -> Result<(String, String), String> {
     let query_pairs: Vec<(String, String)> = parsed_url.query_pairs().into_owned().collect();
 
     println!("HTMLを取得中: {}", url);
-    
+
     match client.get(&base_url).query(&query_pairs).send().await {
         Ok(response) => {
             // ステータスコードをチェック
@@ -265,7 +266,7 @@ pub async fn get_html(url: &str) -> Result<(String, String), String> {
             // リダイレクト後の最終URLを取得
             let final_url = response.url().to_string();
             println!("最終URL: {}", final_url);
-            
+
             match response.text().await {
                 Ok(text) => {
                     println!("HTML取得完了: {} bytes", text.len());
