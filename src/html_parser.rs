@@ -178,11 +178,9 @@ function addApiKeyToProxyLinks(){
     // URLパラメータにない場合はLocalStorageから取得
     if(!apiKey){
         apiKey=localStorage.getItem('rigil_api_key');
-        console.log("hogehoge");
     }
 
     if(apiKey){
-        console.log("hogehoge");
         const proxyLinks=document.querySelectorAll('a[href^="/proxy?url="]');
         proxyLinks.forEach(link=>{
             const href=link.getAttribute('href');
